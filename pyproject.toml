@@ -1,0 +1,74 @@
+[build-system]
+requires = ["setuptools>=61.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jsonlogic"
+description = "An extensible and sane implementation of JsonLogic"
+version = "0.0.1"
+readme = "README.rst"
+authors = [
+    {name = "Victorien", email = "contact@vctrn.dev"}
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Typing :: Typed",
+    "License :: OSI Approved :: MIT License",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+license = {file = "LICENSE"}
+requires-python = ">=3.8"
+dependencies = [
+    "typing-extensions>=4.6.0; python_version < '3.12'",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"jsonlogic" = ["py.typed"]
+
+[tool.ruff]
+line-length = 120
+src = ["src"]
+target-version = "py38"
+
+[tool.ruff.lint]
+preview = true
+explicit-preview-rules = true
+select = [
+    "E",      # pycodestyle (E)
+    "W",      # pycodestyle (W)
+    "F",      # Pyflakes
+    "UP",     # pyupgrade
+    "I",      # isort
+    "PL",     # Pylint
+    "RUF",    # Ruff
+    "RUF022", # Ruff-preview
+    "YTT",    # flake8-2020
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "T10",    # flake8-debugger
+    "PIE",    # flake8-pie
+    "T20",    # flake8-print
+    "RSE",    # flake8-raise
+    "PTH",    # flake8-use-pathlib
+]
+ignore = [
+    "PLR2004"
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["jsonlogic"]
