@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "jsonlogic"
+name = "python-jsonlogic"
 description = "An extensible and sane implementation of JsonLogic"
 version = "0.0.1"
 readme = "README.rst"
