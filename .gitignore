@@ -5,6 +5,7 @@ __pycache__/
 
 # C extensions
 *.so
+!src/jsonlogic/ast/json.so
 
 # Distribution / packaging
 .Python

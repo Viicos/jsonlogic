@@ -38,7 +38,7 @@ package-dir = {"" = "src"}
 where = ["src"]
 
 [tool.setuptools.package-data]
-"jsonlogic" = ["py.typed"]
+"jsonlogic" = ["py.typed", "ast/json.so"]
 
 [tool.ruff]
 line-length = 120

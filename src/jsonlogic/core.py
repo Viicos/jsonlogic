@@ -19,27 +19,27 @@ if TYPE_CHECKING:
     from .registry import OperatorRegistry
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Operator(ABC):
     """The base class for all operators."""
 
     operator: str = field(repr=False)
     """The string representation of the operator."""
 
-    # metadata: Any | None = None
-    # """Extra metadata for this operator.
+    metadata: Any | None = None
+    """Extra metadata for this operator.
 
-    # For any exception encountered, this will be included.
-    # """
+    For any exception encountered, this will be included.
+    """
 
     @classmethod
     @abstractmethod
-    def from_expression(cls, operator: str, arguments: list[OperatorArgument]) -> Self:
+    def from_expression(cls, operator: str, arguments: list[OperatorArgument], metadata=None) -> Self:
         """Return an instance of the operator from the list of provided arguments."""
 
-    @abstractmethod
-    def apply(self, data: JSON) -> Any:
-        pass
+    # @abstractmethod
+    # def apply(self, data: JSON) -> Any:
+    #     pass
 
     def typecheck(self, data_schema: dict[str, Any]) -> JSONSchemaType:
         """Typecheck the operator (and all children) given the data schema."""

@@ -128,3 +128,6 @@ class DateType(JSONSchemaType):
 class NullType(JSONSchemaType):
     def comparable_with(self, other: JSONSchemaType) -> Literal[False]:
         return False
+
+
+t = UnionType(IntegerType(), AnyType())

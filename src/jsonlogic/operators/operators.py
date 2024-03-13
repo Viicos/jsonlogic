@@ -28,12 +28,12 @@ class Var(Operator):
     default_value: OperatorArgument | Unset = UNSET
 
     @classmethod
-    def from_expression(cls, operator: str, arguments: list[OperatorArgument]) -> Self:
+    def from_expression(cls, operator: str, arguments: list[OperatorArgument], metadata=None) -> Self:
         assert len(arguments) in (1, 2)
         assert isinstance(arguments[0], (str, Operator))
         if len(arguments) == 1:
-            return cls(operator=operator, variable_path=arguments[0])
-        return cls(operator=operator, variable_path=arguments[0], default_value=arguments[1])
+            return cls(operator=operator, variable_path=arguments[0], metadata=metadata)
+        return cls(operator=operator, variable_path=arguments[0], default_value=arguments[1], metadata=metadata)
 
     def typecheck(self, data_schema: dict[str, Any]) -> JSONSchemaType:
         if isinstance(self.variable_path, Operator):
@@ -62,9 +62,9 @@ class EqualityOperator(Operator):
     right: OperatorArgument
 
     @classmethod
-    def from_expression(cls, operator: str, arguments: list[OperatorArgument]) -> Self:
+    def from_expression(cls, operator: str, arguments: list[OperatorArgument], metadata=None) -> Self:
         assert len(arguments) == 2
-        return cls(operator=operator, left=arguments[0], right=arguments[1])
+        return cls(operator=operator, left=arguments[0], right=arguments[1], metadata=metadata)
 
     def typecheck(self, data_schema: dict[str, Any]) -> JSONSchemaType:
         if isinstance(self.left, Operator):
@@ -90,9 +90,14 @@ class IfOperator(Operator):
     leading_else: OperatorArgument
 
     @classmethod
-    def from_expression(cls, operator: str, arguments: list[OperatorArgument]) -> Self:
+    def from_expression(cls, operator: str, arguments: list[OperatorArgument], metadata=None) -> Self:
         assert len(arguments) % 2 == 1
-        return cls(operator=operator, if_elses=list(zip(arguments[::2], arguments[1::2])), leading_else=arguments[-1])
+        return cls(
+            operator=operator,
+            if_elses=list(zip(arguments[::2], arguments[1::2])),
+            leading_else=arguments[-1],
+            metadata=metadata,
+        )
 
     def typecheck(self, data_schema: dict[str, Any]) -> JSONSchemaType:
         for cond, _ in self.if_elses:
@@ -113,11 +118,11 @@ class ComparableOperator(Operator):
     right: OperatorArgument
 
     @classmethod
-    def from_expression(cls, operator: str, arguments: list[OperatorArgument]) -> Self:
+    def from_expression(cls, operator: str, arguments: list[OperatorArgument], metadata=None) -> Self:
         assert len(arguments) == 2
         # TODO validate valid primitives (e.g. array probably not valid)
         # Maybe not necessary, `typecheck` will handle it
-        return cls(operator=operator, left=arguments[0], right=arguments[1])
+        return cls(operator=operator, left=arguments[0], right=arguments[1], metadata=metadata)
 
     def typecheck(self, data_schema: dict[str, Any]) -> JSONSchemaType:
         left_type = get_type(self.left, data_schema)
