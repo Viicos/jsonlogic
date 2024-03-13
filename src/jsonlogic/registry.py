@@ -1,3 +1,5 @@
+"""The main operator registry class and related exceptions."""
+
 from typing import Callable, overload
 
 from ._compat import Self, TypeAlias
@@ -22,6 +24,22 @@ OperatorType: TypeAlias = type[Operator]
 
 
 class OperatorRegistry:
+    """A collection of :class:`~jsonlogic.core.Operator` classes.
+
+    Acts as a wrapper over a mapping of operator IDs to the actual class.
+
+    .. code-block:: pycon
+
+        >>> reg = OperatorRegistry()
+        >>> reg.register("var", MyVarOperator)
+        >>> reg.get("var")
+        <class 'MyVarOperator'>
+        >>> reg.get("unknown")
+        Traceback (most recent call last):
+        ...
+        UnkownOperator: "unknown"
+    """
+
     def __init__(self) -> None:
         self._registry: dict[str, OperatorType] = {}
 
@@ -43,7 +61,7 @@ class OperatorRegistry:
             force: Whether to override any existing operator under the provided ID.
 
         Raises:
-            AlreadyRegistered: If ``force`` wasn't set and the ID already exist.
+            AlreadyRegistered: If :paramref:`force` wasn't set and the ID already exists.
 
         Note:
             The method is usable as a decorator:

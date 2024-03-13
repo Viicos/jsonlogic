@@ -22,10 +22,16 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
+    "sphinx_paramlinks",
 ]
 
 templates_path = ["_templates"]
 exclude_patterns = []
+
+autodoc_member_order = "bysource"
+autodoc_type_aliases = {
+    "OperatorArgument": "OperatorArgument",
+}
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),

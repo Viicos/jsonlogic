@@ -11,6 +11,8 @@ from .operators import (
     Var,
 )
 
+__all__ = ("operator_registry",)
+
 operator_registry = OperatorRegistry()
 """The operator registry."""
 

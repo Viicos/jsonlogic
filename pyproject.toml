@@ -46,6 +46,7 @@ src = ["src"]
 target-version = "py38"
 
 [tool.ruff.lint]
+typing-modules = ["_compat"]
 preview = true
 explicit-preview-rules = true
 select = [

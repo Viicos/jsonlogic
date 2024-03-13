@@ -15,6 +15,7 @@ charset-normalizer==3.3.2
 docutils==0.20.1
     # via
     #   sphinx
+    #   sphinx-paramlinks
     #   sphinx-rtd-theme
 idna==3.6
     # via requests
@@ -35,8 +36,11 @@ snowballstemmer==2.2.0
 sphinx==7.2.6
     # via
     #   -r requirements/requirements-docs.in
+    #   sphinx-paramlinks
     #   sphinx-rtd-theme
     #   sphinxcontrib-jquery
+sphinx-paramlinks==0.6.0
+    # via -r requirements/requirements-docs.in
 sphinx-rtd-theme==2.0.0
     # via -r requirements/requirements-docs.in
 sphinxcontrib-applehelp==1.0.8

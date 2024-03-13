@@ -1,3 +1,7 @@
+"""Base structures of the library. The two classes defined, :class:`Operator` and :class:`JSONLogicExpression`,
+can be extended to provide extra functionality.
+"""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -48,10 +52,29 @@ NormalizedExpression: TypeAlias = "dict[str, list[JSONLogicExpression]]"
 
 @dataclass
 class JSONLogicExpression:
+    """A parsed and normalized JSON Logic expression.
+
+    A JSON Logic expression can be:
+
+    - a single item dictionary, mapping the operator key to another :class:`JSONLogicExpression`,
+    - a :data:`~jsonlogic.typing.JSONLogicPrimitive`.
+
+    All JSON Logic expressions should be instantiated using the :meth:`from_json` constructor::
+
+        expr = JSONLogicExpression.from_json(...)
+    """
+
     expression: JSONLogicPrimitive | NormalizedExpression
 
     @classmethod
     def from_json(cls, json: JSON) -> Self:  # TODO disallow list?
+        """Build a JSON Logic expression from JSON data.
+
+        Operator arguments are recursively normalized to a :class:`list`::
+
+            expr = JSONLogicExpression.from_json({"var": "varname"})
+            assert expr.expression == {"var": ["varname"]}
+        """
         if not isinstance(json, dict):
             return cls(expression=json)
 
@@ -64,6 +87,15 @@ class JSONLogicExpression:
         return cls({operator: sub_expressions})
 
     def as_operator_tree(self, operator_registry: OperatorRegistry) -> JSONLogicPrimitive | Operator:
+        """Return a recursive tree of operators, using from the provided registry.
+
+        Args:
+            operator_registry: The registry to use to resolve operator IDs.
+
+        Returns:
+            The current expression if it is a :data:`~jsonlogic.typing.JSONLogicPrimitive`
+            or an :class:`Operator` instance.
+        """
         if not isinstance(self.expression, dict):
             return self.expression
 

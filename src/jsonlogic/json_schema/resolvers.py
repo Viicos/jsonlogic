@@ -6,7 +6,7 @@ PointerT = TypeVar("PointerT")
 
 
 class Unresolvable(Exception, Generic[PointerT]):
-    """A pointer was unresolvable."""
+    """A pointer is unresolvable."""
 
     # TODO `details` argument, providing more info?
     def __init__(self, pointer: PointerT, /) -> None:
