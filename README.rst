@@ -2,7 +2,7 @@
 python-jsonlogic
 ================
 
-|Pythons| |PyPI|
+|Pythons| |PyPI| |Ruff|
 
 .. |Pythons| image:: https://img.shields.io/pypi/pyversions/python-jsonlogic.svg
   :alt: Supported Python versions
@@ -66,12 +66,17 @@ Usage
     root_op = expr.as_operator_tree(operator_registry)
 
     # 4. Typecheck the expression:
-    typ = root_op.typecheck(data_schema={
-        "type": "object",
-        "properties": {
-            "my_int": {"type": "integer"}
-        },
-    })
+    from jsonlogic.typechecking import typecheck
+
+    typ, diagnostics = typecheck(
+        root_op,
+        data_schema={
+          "type": "object",
+          "properties": {
+                "my_int": {"type": "integer"}
+            },
+        }
+    )
     print(typ)
     #> BooleanType()
 

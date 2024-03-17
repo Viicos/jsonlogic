@@ -14,5 +14,5 @@ Indices and tables
 .. toctree::
    :maxdepth: 2
 
-   api/index
    usage/index
+   api/index
