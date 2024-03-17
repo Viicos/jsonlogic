@@ -14,7 +14,7 @@ from .operators import (
 __all__ = ("operator_registry",)
 
 operator_registry = OperatorRegistry()
-"""The operator registry."""
+"""The default operator registry."""
 
 operator_registry.register("var", Var)
 operator_registry.register("==", EqualOperator)

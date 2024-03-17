@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from typing import TypeAlias
 
     from .registry import OperatorRegistry
+    from .typechecking import TypecheckContext
 
 
 @dataclass
@@ -35,16 +36,29 @@ class Operator(ABC):
     @classmethod
     @abstractmethod
     def from_expression(cls, operator: str, arguments: list[OperatorArgument]) -> Self:
-        """Return an instance of the operator from the list of provided arguments."""
+        """Return an instance of the operator from the list of provided arguments.
+
+        Args:
+            operator: The ID of the operator, as provided by the :class:`~jsonlogic.registry.OperatorRegistry`.
+            arguments: The list of the arguments for this operator. Subclasses are responsible
+                for checking the correct number of arguments and optionally the types.
+        """
 
     @abstractmethod
     def apply(self, data: JSON) -> Any:
-        pass
+        """Evaluate the operator with the provided data."""
 
-    def typecheck(self, data_schema: dict[str, Any]) -> JSONSchemaType:
+    def typecheck(self, context: TypecheckContext) -> JSONSchemaType:
         """Typecheck the operator (and all children) given the data schema."""
 
         return AnyType()
+
+
+class JSONLogicSyntaxError(Exception):
+    """A syntax error when building an operator tree from a :class:`JSONLogicExpression`."""
+
+    def __init__(self, message: str, /) -> None:
+        self.message = message
 
 
 NormalizedExpression: TypeAlias = "dict[str, list[JSONLogicExpression]]"
@@ -87,7 +101,7 @@ class JSONLogicExpression:
         return cls({operator: sub_expressions})
 
     def as_operator_tree(self, operator_registry: OperatorRegistry) -> JSONLogicPrimitive | Operator:
-        """Return a recursive tree of operators, using from the provided registry.
+        """Return a recursive tree of operators, using the provided registry as a reference.
 
         Args:
             operator_registry: The registry to use to resolve operator IDs.

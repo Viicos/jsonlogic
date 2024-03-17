@@ -6,10 +6,6 @@
 Welcome to jsonlogic's documentation!
 =====================================
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
-
 .. include:: ../../README.rst
 
 Indices and tables
@@ -18,4 +14,5 @@ Indices and tables
 .. toctree::
    :maxdepth: 2
 
-   api
+   api/index
+   usage/index

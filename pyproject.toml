@@ -73,3 +73,6 @@ ignore = [
 
 [tool.ruff.lint.isort]
 known-first-party = ["jsonlogic"]
+
+[tool.pyright]
+reportTypedDictNotRequiredAccess = "none"  # until partial typeddicts lands

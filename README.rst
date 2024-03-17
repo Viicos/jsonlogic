@@ -1,6 +1,6 @@
-=========
-jsonlogic
-=========
+================
+python-jsonlogic
+================
 
 |Pythons| |PyPI|
 
@@ -26,14 +26,15 @@ and some aspects are unclear/unspecified:
 
 * `operators <https://jsonlogic.com/operations.html>`_ arguments can take any value. For instance,
   `comparison operators <https://jsonlogic.com/operations.html#---and->`_ are said to work with "numeric" values,
-  however the `JavaScript playground <https://jsonlogic.com/play.html>`_ doesn't validate inputs.
+  however the `JavaScript playground <https://jsonlogic.com/play.html>`_ doesn't validate inputs. It is
+  also convenient to allow such comparison operators for date and datetime objects as well.
 * Operators `accessing data <https://jsonlogic.com/operations.html#accessing-data>`_ use a dot-like notation,
   which is ambiguous when dealing with keys such as ``my.key``.
 * Operators such as `map <https://jsonlogic.com/operations.html#map-reduce-and-filter>`_ provides their own data scope,
   making it impossible to access higher-level data inside the operator expression.
 
 For these reasons, ``python-jsonlogic`` provides a way to typecheck your JSON Logic expressions at "compile" time,
-before applying input data on them.
+before applying input data to them.
 
 .. _`JsonLogic`: https://jsonlogic.com/
 
@@ -45,6 +46,8 @@ From PyPI:
 .. code:: bash
 
     pip install python-jsonlogic
+
+The library can be imported from the ``jsonlogic`` module.
 
 Usage
 -----

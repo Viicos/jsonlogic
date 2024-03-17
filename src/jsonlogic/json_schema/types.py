@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Literal, TypeAlias, TypeVar, overload
+from typing import ClassVar, Literal, TypeAlias, TypeVar, overload
 
 from jsonlogic._compat import Self
 
@@ -24,9 +24,12 @@ JSONSchemaPrimitiveTypeT = TypeVar(
 
 
 class JSONSchemaType(ABC):
+    name: ClassVar[str]
+    """The verbose name of the type to be used in diagnostic messages."""
+
     @abstractmethod
     def comparable_with(self, other: JSONSchemaType) -> bool:
-        pass
+        """Whether the provided type is comparable with the current type."""
 
     @overload
     def __or__(self, value: Self, /) -> Self: ...  # type: ignore
@@ -39,6 +42,8 @@ class JSONSchemaType(ABC):
 
 
 class UnionType(JSONSchemaType):
+    name: ClassVar[str] = "union"
+
     types: set[JSONSchemaPrimitiveType]
 
     @overload
@@ -75,18 +80,24 @@ class UnionType(JSONSchemaType):
 
 @dataclass(frozen=True)
 class AnyType(JSONSchemaType):
+    name: ClassVar[str] = "any"
+
     def comparable_with(self, other: JSONSchemaType) -> Literal[False]:
         return False
 
 
 @dataclass(frozen=True)
 class BooleanType(JSONSchemaType):
+    name: ClassVar[str] = "boolean"
+
     def comparable_with(self, other: JSONSchemaType) -> Literal[False]:
         return False
 
 
 @dataclass(frozen=True)
 class NumberType(JSONSchemaType):
+    name: ClassVar[str] = "number"
+
     def comparable_with(self, other: JSONSchemaType) -> bool:
         if isinstance(other, UnionType):
             return other.comparable_with(self)
@@ -95,6 +106,8 @@ class NumberType(JSONSchemaType):
 
 @dataclass(frozen=True)
 class IntegerType(JSONSchemaType):
+    name: ClassVar[str] = "integer"
+
     def comparable_with(self, other: JSONSchemaType) -> bool:
         if isinstance(other, UnionType):
             return other.comparable_with(self)
@@ -103,12 +116,16 @@ class IntegerType(JSONSchemaType):
 
 @dataclass(frozen=True)
 class StringType(JSONSchemaType):
+    name: ClassVar[str] = "string"
+
     def comparable_with(self, other: JSONSchemaType) -> Literal[False]:
         return False
 
 
 @dataclass(frozen=True)
 class DatetimeType(JSONSchemaType):
+    name: ClassVar[str] = "datetime"
+
     def comparable_with(self, other: JSONSchemaType) -> bool:
         if isinstance(other, UnionType):
             return other.comparable_with(self)
@@ -118,6 +135,8 @@ class DatetimeType(JSONSchemaType):
 
 @dataclass(frozen=True)
 class DateType(JSONSchemaType):
+    name: ClassVar[str] = "date"
+
     def comparable_with(self, other: JSONSchemaType) -> bool:
         if isinstance(other, UnionType):
             return other.comparable_with(self)
@@ -126,5 +145,7 @@ class DateType(JSONSchemaType):
 
 @dataclass(frozen=True)
 class NullType(JSONSchemaType):
+    name: ClassVar[str] = "null"
+
     def comparable_with(self, other: JSONSchemaType) -> Literal[False]:
         return False

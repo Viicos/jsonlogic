@@ -3,17 +3,17 @@ from __future__ import annotations
 import functools
 import operator
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Callable, ClassVar
+from typing import TYPE_CHECKING, Callable, ClassVar
 
 from jsonlogic._compat import Self
-from jsonlogic.core import Operator
+from jsonlogic.core import JSONLogicSyntaxError, Operator
 from jsonlogic.json_schema import from_json_schema, from_value
 from jsonlogic.json_schema.resolvers import JSONSchemaPointerResolver, JSONSchemaResolver, Unresolvable
 from jsonlogic.json_schema.types import AnyType, BooleanType, JSONSchemaType
 from jsonlogic.typing import OperatorArgument
-from jsonlogic.utils import UNSET, Unset
+from jsonlogic.utils import UNSET, UnsetType
 
-from .typechecking import TypecheckError, get_type
+from ..typechecking import TypecheckContext, get_type
 
 if TYPE_CHECKING:
     from _typeshed import SupportsAllComparisons
@@ -25,33 +25,42 @@ class Var(Operator):
 
     variable_path: str | Operator
 
-    default_value: OperatorArgument | Unset = UNSET
+    default_value: OperatorArgument | UnsetType = UNSET
 
     @classmethod
     def from_expression(cls, operator: str, arguments: list[OperatorArgument]) -> Self:
-        assert len(arguments) in (1, 2)
-        assert isinstance(arguments[0], (str, Operator))
+        if len(arguments) not in {1, 2}:
+            raise JSONLogicSyntaxError(f"{operator!r} expects one or two arguments, got {len(arguments)}")
+
+        if not isinstance(arguments[0], (str, Operator)):
+            raise JSONLogicSyntaxError(f"Variable path must be a string on an operator, got {type(arguments[0])}")
+
         if len(arguments) == 1:
             return cls(operator=operator, variable_path=arguments[0])
         return cls(operator=operator, variable_path=arguments[0], default_value=arguments[1])
 
-    def typecheck(self, data_schema: dict[str, Any]) -> JSONSchemaType:
+    def typecheck(self, context: TypecheckContext) -> JSONSchemaType:
         if isinstance(self.variable_path, Operator):
-            self.variable_path.typecheck(data_schema)
+            self.variable_path.typecheck(context)
             return AnyType()
 
-        resolver = self.json_schema_resolver(data_schema)
+        resolver = self.json_schema_resolver(context.data_stack)
 
         try:
             js_type = resolver.resolve(self.variable_path)
-            return from_json_schema(js_type)
-        except Unresolvable as e:
-            if isinstance(self.default_value, Unset):
-                raise TypecheckError("Unresolvable reference", self) from e
-            if isinstance(self.default_value, Operator):
-                self.default_value.typecheck(data_schema)
+        except Unresolvable:
+            if self.default_value is UNSET:
+                context.add_diagnostic(
+                    f"{self.variable_path} is unresolvable and not fallback value is provided",
+                    "unresolvable_variable",
+                    self,
+                )
                 return AnyType()
-            return from_value(self.default_value)
+            if isinstance(self.default_value, Operator):
+                return self.default_value.typecheck(context)
+            return from_value(self.default_value, context.settings["literal_casts"])
+        else:
+            return from_json_schema(js_type, context.settings["variable_casts"])
 
 
 @dataclass
@@ -63,14 +72,16 @@ class EqualityOperator(Operator):
 
     @classmethod
     def from_expression(cls, operator: str, arguments: list[OperatorArgument]) -> Self:
-        assert len(arguments) == 2
+        if len(arguments) != 2:
+            raise JSONLogicSyntaxError(f"{operator!r} expects two arguments, got {len(arguments)}")
+
         return cls(operator=operator, left=arguments[0], right=arguments[1])
 
-    def typecheck(self, data_schema: dict[str, Any]) -> JSONSchemaType:
+    def typecheck(self, context: TypecheckContext) -> BooleanType:
         if isinstance(self.left, Operator):
-            self.left.typecheck(data_schema)
+            self.left.typecheck(context)
         if isinstance(self.right, Operator):
-            self.right.typecheck(data_schema)
+            self.right.typecheck(context)
         return BooleanType()
 
 
@@ -91,17 +102,18 @@ class IfOperator(Operator):
 
     @classmethod
     def from_expression(cls, operator: str, arguments: list[OperatorArgument]) -> Self:
-        assert len(arguments) % 2 == 1
+        if len(arguments) % 2 == 1:
+            raise JSONLogicSyntaxError(f"{operator!r} expects an odd number of arguments, got {len(arguments)}")
         return cls(operator=operator, if_elses=list(zip(arguments[::2], arguments[1::2])), leading_else=arguments[-1])
 
-    def typecheck(self, data_schema: dict[str, Any]) -> JSONSchemaType:
-        for cond, _ in self.if_elses:
-            cond_type = get_type(cond, data_schema)
+    def typecheck(self, context: TypecheckContext) -> JSONSchemaType:
+        for i, (cond, _) in enumerate(self.if_elses, start=1):
+            cond_type = get_type(cond, context)
             if not isinstance(cond_type, BooleanType):
-                raise TypecheckError("should be boolean", self)
+                context.add_diagnostic(f"Condition {i} should be a boolean", "argument_type", self)
 
-        return functools.reduce(operator.or_, (get_type(rv, data_schema) for _, rv in self.if_elses)) | get_type(
-            self.leading_else, data_schema
+        return functools.reduce(operator.or_, (get_type(rv, context) for _, rv in self.if_elses)) | get_type(
+            self.leading_else, context
         )
 
 
@@ -114,17 +126,17 @@ class ComparableOperator(Operator):
 
     @classmethod
     def from_expression(cls, operator: str, arguments: list[OperatorArgument]) -> Self:
-        assert len(arguments) == 2
-        # TODO validate valid primitives (e.g. array probably not valid)
-        # Maybe not necessary, `typecheck` will handle it
+        if len(arguments) != 2:
+            raise JSONLogicSyntaxError(f"{operator!r} expects two arguments, got {len(arguments)}")
+
         return cls(operator=operator, left=arguments[0], right=arguments[1])
 
-    def typecheck(self, data_schema: dict[str, Any]) -> JSONSchemaType:
-        left_type = get_type(self.left, data_schema)
-        right_type = get_type(self.right, data_schema)
+    def typecheck(self, context: TypecheckContext) -> BooleanType:
+        left_type = get_type(self.left, context)
+        right_type = get_type(self.right, context)
 
         if not left_type.comparable_with(right_type):
-            raise TypecheckError("Cannot compare types", self)
+            context.add_diagnostic(f"Cannot compare {left_type.name} with {right_type.name}", "not_comparable", self)
 
         return BooleanType()
 
