@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 from typing import Any, Generic, TypeVar
 from urllib.parse import unquote
 
+from jsonlogic.utils import DataStack
+
 PointerT = TypeVar("PointerT")
 
 
@@ -19,8 +21,8 @@ class JSONSchemaResolver(ABC, Generic[PointerT]):
     The implementation of the "pointer" is managed by subclasses.
     """
 
-    def __init__(self, json_schema: dict[str, Any]) -> None:
-        self.json_schema = json_schema
+    def __init__(self, data_stack: DataStack[dict[str, Any]]) -> None:
+        self.data_stack = data_stack
 
     @abstractmethod
     def resolve(self, pointer: PointerT) -> dict[str, Any]:
@@ -28,11 +30,11 @@ class JSONSchemaResolver(ABC, Generic[PointerT]):
 
 
 class JSONSchemaPointerResolver(JSONSchemaResolver[str]):
-    """Resolves the (sub) JSON Schema at the given JSON Pointer, according to RFC 6901."""
+    """Resolves the (sub) JSON Schema at the given JSON Pointer, according to :rfc:`6901`."""
 
     def resolve(self, pointer: str) -> dict[str, Any]:
         # Implementation inspired from the `referencing` library
-        schema = self.json_schema
+        schema = self.data_stack.tail
         for segment in unquote(pointer[1:]).split("/"):
             schema_type = schema.get("type")
             parsed_segment = segment.replace("~1", "/").replace("~0", "~")

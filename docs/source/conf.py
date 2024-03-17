@@ -10,7 +10,7 @@ from pathlib import Path
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 sys.path.insert(0, str(Path(__file__).parents[2] / "src"))
 
-project = "jsonlogic"
+project = "python-jsonlogic"
 copyright = "2024, Victorien"
 author = "Victorien"
 release = "0.1"
@@ -19,19 +19,31 @@ release = "0.1"
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
+    "sphinx.ext.todo",
     "sphinx.ext.autodoc",
     "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
     "sphinx_paramlinks",
 ]
 
+rst_prolog = """
+.. role:: python(code)
+    :language: python
+    :class: highlight
+"""
+
 templates_path = ["_templates"]
 exclude_patterns = []
+
+todo_include_todos = True
 
 autodoc_member_order = "bysource"
 autodoc_type_aliases = {
     "OperatorArgument": "OperatorArgument",
+    "DiagnosticCategory": "DiagnosticCategory",
+    "DiagnosticType": "DiagnosticType",
 }
+autoclass_content = "both"
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
