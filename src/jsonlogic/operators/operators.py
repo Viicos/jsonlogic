@@ -3,20 +3,17 @@ from __future__ import annotations
 import functools
 import operator
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Callable, ClassVar
+from typing import Any, Callable, ClassVar
 
 from jsonlogic._compat import Self
 from jsonlogic.core import JSONLogicSyntaxError, Operator
 from jsonlogic.json_schema import from_json_schema, from_value
 from jsonlogic.json_schema.resolvers import JSONSchemaPointerResolver, JSONSchemaResolver, Unresolvable
-from jsonlogic.json_schema.types import AnyType, BooleanType, JSONSchemaType
+from jsonlogic.json_schema.types import AnyType, BinaryOp, BooleanType, JSONSchemaType, UnsupportedOperation
 from jsonlogic.typing import OperatorArgument
 from jsonlogic.utils import UNSET, UnsetType
 
 from ..typechecking import TypecheckContext, get_type
-
-if TYPE_CHECKING:
-    from _typeshed import SupportsAllComparisons
 
 
 @dataclass
@@ -118,8 +115,9 @@ class IfOperator(Operator):
 
 
 @dataclass
-class ComparableOperator(Operator):
-    operator_func: ClassVar[Callable[[SupportsAllComparisons, SupportsAllComparisons], bool]]
+class BinaryOperator(Operator):
+    operator_func: ClassVar[Callable[[Any, Any], Any]]
+    operator_symbol: ClassVar[BinaryOp]
 
     left: OperatorArgument
     right: OperatorArgument
@@ -131,14 +129,20 @@ class ComparableOperator(Operator):
 
         return cls(operator=operator, left=arguments[0], right=arguments[1])
 
-    def typecheck(self, context: TypecheckContext) -> BooleanType:
+    def typecheck(self, context: TypecheckContext) -> JSONSchemaType:
         left_type = get_type(self.left, context)
         right_type = get_type(self.right, context)
 
-        if not left_type.comparable_with(right_type):
-            context.add_diagnostic(f"Cannot compare {left_type.name} with {right_type.name}", "not_comparable", self)
+        try:
+            return left_type.binary_op(right_type, self.operator_symbol)
+        except UnsupportedOperation:
+            context.add_diagnostic(
+                f"Operator {self.operator_symbol} not supported for types {left_type.name} and {right_type.name}",
+                "operator",
+                self,
+            )
 
-        return BooleanType()
+        return AnyType()
 
     def apply(self, data) -> bool:
         left = self.left
@@ -152,20 +156,109 @@ class ComparableOperator(Operator):
 
 
 @dataclass
-class GreaterThan(ComparableOperator):
+class GreaterThan(BinaryOperator):
     operator_func = operator.gt
+    operator_symbol = ">"
 
 
 @dataclass
-class GreaterThanOrEqual(ComparableOperator):
+class GreaterThanOrEqual(BinaryOperator):
     operator_func = operator.ge
+    operator_symbol = ">="
 
 
 @dataclass
-class LessThan(ComparableOperator):
+class LessThan(BinaryOperator):
     operator_func = operator.lt
+    operator_symbol = "<"
 
 
 @dataclass
-class LessThanOrEqual(ComparableOperator):
+class LessThanOrEqual(BinaryOperator):
     operator_func = operator.le
+    operator_symbol = "<="
+
+
+@dataclass
+class DivisionOperator(BinaryOperator):
+    operator_func = operator.truediv
+    operator_symbol = "/"
+
+
+@dataclass
+class ModuloOperator(BinaryOperator):
+    operator_func = operator.mod
+    operator_symbol = "%"
+
+
+@dataclass
+class PlusOperator(Operator):
+    arguments: list[OperatorArgument]
+
+    @classmethod
+    def from_expression(cls, operator: str, arguments: list[OperatorArgument]) -> Self:
+        # Having a unary + is a bit useless, but we might not error here in the future
+        if not len(arguments) >= 2:
+            raise JSONLogicSyntaxError(f"{operator!r} expects at least two arguments, got {len(arguments)}")
+        return cls(operator=operator, arguments=arguments)
+
+    def typecheck(self, context: TypecheckContext) -> JSONSchemaType:
+        types = (get_type(obj, context) for obj in self.arguments)
+        result_type = next(types)
+
+        for i, typ in enumerate(types, start=1):
+            try:
+                result_type = result_type.binary_op(typ, "+")
+            except UnsupportedOperation:
+                if len(self.arguments) == 2:
+                    msg = f"Operator + not supported for types {result_type.name} and {typ.name}"
+                else:
+                    msg = f"Operator + not supported for types {result_type.name} (argument {i}) and {typ.name} (argument {i + 1})"  # noqa: E501
+                context.add_diagnostic(
+                    msg,
+                    "operator",
+                    self,
+                )
+                return AnyType()
+
+        return result_type
+
+
+@dataclass
+class MinusOperator(Operator):
+    left: OperatorArgument
+    right: OperatorArgument | UnsetType = UNSET
+
+    @classmethod
+    def from_expression(cls, operator: str, arguments: list[OperatorArgument]) -> Self:
+        if len(arguments) not in {1, 2}:
+            raise JSONLogicSyntaxError(f"{operator!r} expects one or two arguments, got {len(arguments)}")
+
+        if len(arguments) == 1:
+            return cls(operator=operator, left=arguments[0])
+        return cls(operator=operator, left=arguments[0], right=arguments[1])
+
+    def typecheck(self, context: TypecheckContext) -> JSONSchemaType:
+        left_type = get_type(self.left, context)
+        if self.right is UNSET:
+            try:
+                return left_type.unary_op("-")
+            except UnsupportedOperation:
+                context.add_diagnostic(
+                    f"Operator - not supported for type {left_type.name}",
+                    "operator",
+                    self,
+                )
+                return AnyType()
+
+        right_type = get_type(self.right, context)
+
+        try:
+            return left_type.binary_op(right_type, "-")
+        except UnsupportedOperation:
+            context.add_diagnostic(
+                f"Operator - not supported for type {left_type.name} and {right_type.name}",
+                "operator",
+                self,
+            )
+            return AnyType()

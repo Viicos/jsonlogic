@@ -13,7 +13,7 @@ from .json_schema.types import AnyType, JSONSchemaType
 from .typing import JSON, JSONLogicPrimitive, OperatorArgument
 
 if TYPE_CHECKING:
-    # This is a hack to make pyright think `TypeAlias` comes from `typing`
+    # This is a hack to make Pylance think `TypeAlias` comes from `typing`
     from typing import TypeAlias
 
     from .registry import OperatorRegistry

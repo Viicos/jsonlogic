@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from ._compat import TypeAlias
 
 if TYPE_CHECKING:
-    # This is a hack to make pyright think `TypeAlias` comes from `typing`
+    # This is a hack to make Pylance think `TypeAlias` comes from `typing`
     from typing import TypeAlias
 
     from jsonlogic.core import Operator

@@ -2,13 +2,9 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import ClassVar, Literal, TypeAlias, TypeVar, overload
+from typing import Callable, ClassVar, Literal, NoReturn, TypeVar, overload
 
-from jsonlogic._compat import Self
-
-JSONSchemaPrimitiveType: TypeAlias = (
-    "AnyType | BooleanType | NumberType | StringType | DatetimeType | DateType | NullType"
-)
+from jsonlogic._compat import Self, TypeAlias
 
 JSONSchemaPrimitiveTypeT = TypeVar(
     "JSONSchemaPrimitiveTypeT",
@@ -19,8 +15,40 @@ JSONSchemaPrimitiveTypeT = TypeVar(
     "StringType",
     "DatetimeType",
     "DateType",
+    "DurationType",
     "NullType",
 )
+JSONSchemaTypeT = TypeVar("JSONSchemaTypeT", bound="JSONSchemaType")
+
+BinaryOp: TypeAlias = Literal[">", ">=", "<", "<=", "+", "-", "*", "/", "%"]
+UnaryOp: TypeAlias = Literal["-", "bool"]
+
+
+class UnsupportedOperation(Exception):
+    pass
+
+
+def unpack_union(
+    func: Callable[[JSONSchemaTypeT, JSONSchemaPrimitiveType, BinaryOp], JSONSchemaType], /
+) -> Callable[[JSONSchemaTypeT, JSONSchemaType, BinaryOp], JSONSchemaType]:
+    """A utility decorator to unpack types of :class:`UnionType` when calling :meth:`JSONSchemaType.binary_op`.
+
+    If :paramref:`~JSONSchemaType.binary_op.other` is a :class:`UnionType`, each type of the union
+    will be recursively applied to the :meth:`~JSONSchemaType.binary_op` method.
+    """
+
+    def wrapper(self: JSONSchemaTypeT, other: JSONSchemaType, op: BinaryOp) -> JSONSchemaType:
+        if not isinstance(other, UnionType):
+            assert isinstance(other, JSONSchemaPrimitiveType)
+            return func(self, other, op)
+
+        result_types: list[JSONSchemaType] = []
+        for typ in other.types:
+            result_types.append(func(self, typ, op))
+
+        return UnionType(*result_types)
+
+    return wrapper
 
 
 class JSONSchemaType(ABC):
@@ -28,8 +56,29 @@ class JSONSchemaType(ABC):
     """The verbose name of the type to be used in diagnostic messages."""
 
     @abstractmethod
-    def comparable_with(self, other: JSONSchemaType) -> bool:
-        """Whether the provided type is comparable with the current type."""
+    def binary_op(self, other: JSONSchemaType, op: BinaryOp, /) -> JSONSchemaType:
+        """Get the resulting type of the binary operation with the other provided type.
+
+        Args:
+            other: The right hand operand of the operation.
+            op: The string representation of the operator.
+        Returns:
+            The return type of the operation.
+        Raises:
+            UnsupportedOperation: The operator is unsupported for the operands
+        """
+
+    @abstractmethod
+    def unary_op(self, op: UnaryOp) -> JSONSchemaType:
+        """Get the resulting type of the unary operation.
+
+        Args:
+            op: The string representation of the operator.
+        Returns:
+            The return type of the operation.
+        Raises:
+            UnsupportedOperation: The operator is unsupported for the current type.
+        """
 
     @overload
     def __or__(self, value: Self, /) -> Self: ...  # type: ignore
@@ -47,12 +96,17 @@ class UnionType(JSONSchemaType):
     types: set[JSONSchemaPrimitiveType]
 
     @overload
-    def __new__(cls, *types: JSONSchemaPrimitiveTypeT) -> JSONSchemaPrimitiveTypeT: ...
+    def __new__(cls, type: JSONSchemaTypeT, /) -> JSONSchemaTypeT: ...
+
+    # In reality, this won't account for unknown subtypes (see https://github.com/python/mypy/issues/6559#issuecomment-864411598)
+    @overload
+    def __new__(cls, type: JSONSchemaPrimitiveTypeT, *types: JSONSchemaPrimitiveTypeT) -> JSONSchemaPrimitiveTypeT: ...
 
     @overload
-    def __new__(cls, *types: JSONSchemaType) -> Self: ...
+    def __new__(cls, type: JSONSchemaType, *types: JSONSchemaType) -> Self: ...
 
-    def __new__(cls, *types):
+    def __new__(cls, type, *types):
+        types = [type, *types]
         if all(isinstance(t, type(types[0])) for t in types):
             return types[0]
         self = super().__new__(cls)
@@ -67,85 +121,178 @@ class UnionType(JSONSchemaType):
     def __repr__(self) -> str:
         return f"{self.__class__.__qualname__}({', '.join(str(t) for t in self.types)})"
 
-    def comparable_with(self, other: JSONSchemaType) -> bool:
+    def binary_op(self, other: JSONSchemaType, op: BinaryOp) -> JSONSchemaType:
+        result_types: list[JSONSchemaType] = []
         for typ in self.types:
             if isinstance(other, UnionType):
-                comparable = all(other_typ.comparable_with(typ) for other_typ in other.types)
+                result_types.extend(typ.binary_op(other_typ, op) for other_typ in other.types)
             else:
-                comparable = other.comparable_with(typ)
-            if not comparable:
-                return False
-        return True
+                result_types.append(typ.binary_op(other, op))
+
+        return UnionType(*result_types)
+
+    def unary_op(self, op: UnaryOp) -> JSONSchemaType:
+        return UnionType(*(typ.unary_op(op) for typ in self.types))
+
+
+class JSONSchemaPrimitiveType(JSONSchemaType, ABC):
+    """A JSON Schema type other than :class:`UnionType`."""
 
 
 @dataclass(frozen=True)
-class AnyType(JSONSchemaType):
+class ArrayType(JSONSchemaPrimitiveType):
+    name: ClassVar[str] = "array"
+
+    elements_type: JSONSchemaType
+    """The type of the elements of the array."""
+
+
+@dataclass(frozen=True)
+class AnyType(JSONSchemaPrimitiveType):
     name: ClassVar[str] = "any"
 
-    def comparable_with(self, other: JSONSchemaType) -> Literal[False]:
-        return False
+    def binary_op(self, other: JSONSchemaType, op: BinaryOp) -> JSONSchemaType:
+        return AnyType()
+
+    def unary_op(self, op: UnaryOp) -> JSONSchemaType:
+        return AnyType()
 
 
 @dataclass(frozen=True)
-class BooleanType(JSONSchemaType):
+class BooleanType(JSONSchemaPrimitiveType):
     name: ClassVar[str] = "boolean"
 
-    def comparable_with(self, other: JSONSchemaType) -> Literal[False]:
-        return False
+    def binary_op(self, other: JSONSchemaType, op: BinaryOp) -> NoReturn:
+        raise UnsupportedOperation
+
+    def unary_op(self, op: UnaryOp) -> JSONSchemaType:
+        if op == "bool":
+            return BooleanType()
+        raise UnsupportedOperation
 
 
 @dataclass(frozen=True)
-class NumberType(JSONSchemaType):
+class NumberType(JSONSchemaPrimitiveType):
     name: ClassVar[str] = "number"
 
-    def comparable_with(self, other: JSONSchemaType) -> bool:
-        if isinstance(other, UnionType):
-            return other.comparable_with(self)
-        return isinstance(other, (NumberType, IntegerType))
+    @unpack_union
+    def binary_op(self, other: JSONSchemaPrimitiveType, op: BinaryOp) -> JSONSchemaType:
+        if not isinstance(other, (NumberType, IntegerType)):
+            raise UnsupportedOperation
+        if op in {">", ">=", "<", "<="}:
+            return BooleanType()
+        if op in {"+", "-", "*", "/", "%"}:
+            return NumberType()
+        raise UnsupportedOperation
+
+    def unary_op(self, op: UnaryOp) -> JSONSchemaType:
+        if op == "-":
+            return NumberType()
+        if op == "bool":
+            return BooleanType()
+        raise UnsupportedOperation
 
 
 @dataclass(frozen=True)
-class IntegerType(JSONSchemaType):
+class IntegerType(JSONSchemaPrimitiveType):
     name: ClassVar[str] = "integer"
 
-    def comparable_with(self, other: JSONSchemaType) -> bool:
-        if isinstance(other, UnionType):
-            return other.comparable_with(self)
-        return isinstance(other, (NumberType, IntegerType))
+    def binary_op(self, other: JSONSchemaType, op: BinaryOp) -> JSONSchemaType:
+        if not isinstance(other, (NumberType, IntegerType)):
+            raise UnsupportedOperation
+        if op in {">", ">=", "<", "<="}:
+            return BooleanType()
+        if op in {"+", "-", "*", "%"}:
+            return IntegerType() if isinstance(other, IntegerType) else NumberType()
+        if op == "/":
+            return NumberType()
+        raise UnsupportedOperation
+
+    def unary_op(self, op: UnaryOp) -> JSONSchemaType:
+        if op == "-":
+            return IntegerType()
+        if op == "bool":
+            return BooleanType()
+        raise UnsupportedOperation
 
 
 @dataclass(frozen=True)
-class StringType(JSONSchemaType):
+class StringType(JSONSchemaPrimitiveType):
     name: ClassVar[str] = "string"
 
-    def comparable_with(self, other: JSONSchemaType) -> Literal[False]:
-        return False
+    def binary_op(self, other: JSONSchemaType, op: BinaryOp) -> NoReturn:
+        raise UnsupportedOperation
+
+    def unary_op(self, op: UnaryOp) -> JSONSchemaType:
+        if op == "bool":
+            return BooleanType()
+        raise UnsupportedOperation
 
 
 @dataclass(frozen=True)
-class DatetimeType(JSONSchemaType):
+class DatetimeType(JSONSchemaPrimitiveType):
     name: ClassVar[str] = "datetime"
 
-    def comparable_with(self, other: JSONSchemaType) -> bool:
-        if isinstance(other, UnionType):
-            return other.comparable_with(self)
-        # Probably doesn't make sense with date?
-        return isinstance(other, DatetimeType)
+    def binary_op(self, other: JSONSchemaType, op: BinaryOp) -> JSONSchemaType:
+        if isinstance(other, DatetimeType):
+            if op in {">", ">=", "<", "<="}:
+                return BooleanType()
+            if op == "-":
+                return DurationType()
+        elif isinstance(other, DurationType) and op in {"+", "-"}:
+            return DatetimeType()
+        raise UnsupportedOperation
+
+    def unary_op(self, op: UnaryOp) -> NoReturn:
+        raise UnsupportedOperation
 
 
 @dataclass(frozen=True)
-class DateType(JSONSchemaType):
+class DateType(JSONSchemaPrimitiveType):
     name: ClassVar[str] = "date"
 
-    def comparable_with(self, other: JSONSchemaType) -> bool:
-        if isinstance(other, UnionType):
-            return other.comparable_with(self)
-        return isinstance(other, DateType)
+    def binary_op(self, other: JSONSchemaType, op: BinaryOp) -> JSONSchemaType:
+        if isinstance(other, DateType):
+            if op in {">", ">=", "<", "<="}:
+                return BooleanType()
+            if op == "-":
+                return DurationType()
+        elif isinstance(other, DurationType) and op in {"+", "-"}:
+            return DateType()
+        raise UnsupportedOperation
+
+    def unary_op(self, op: UnaryOp) -> NoReturn:
+        raise UnsupportedOperation
 
 
 @dataclass(frozen=True)
-class NullType(JSONSchemaType):
+class DurationType(JSONSchemaPrimitiveType):
+    name: ClassVar[str] = "duration"
+
+    def binary_op(self, other: JSONSchemaType, op: BinaryOp) -> JSONSchemaType:
+        if isinstance(other, DurationType):
+            if op in {">", ">=", "<", "<="}:
+                return BooleanType()
+            if op in {"+", "-"}:
+                return DurationType()
+        elif isinstance(other, (DatetimeType, DateType)) and op == "+":
+            return type(other)()
+        raise UnsupportedOperation
+
+    def unary_op(self, op: UnaryOp) -> JSONSchemaType:
+        if op == "-":
+            return DurationType()
+        raise UnsupportedOperation
+
+
+@dataclass(frozen=True)
+class NullType(JSONSchemaPrimitiveType):
     name: ClassVar[str] = "null"
 
-    def comparable_with(self, other: JSONSchemaType) -> Literal[False]:
-        return False
+    def binary_op(self, other: JSONSchemaType, op: BinaryOp) -> NoReturn:
+        raise UnsupportedOperation
+
+    def unary_op(self, op: UnaryOp) -> JSONSchemaType:
+        if op == "bool":
+            return BooleanType()
+        raise UnsupportedOperation

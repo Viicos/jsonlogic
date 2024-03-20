@@ -42,6 +42,9 @@ autodoc_type_aliases = {
     "OperatorArgument": "OperatorArgument",
     "DiagnosticCategory": "DiagnosticCategory",
     "DiagnosticType": "DiagnosticType",
+    "BinaryOp": "BinaryOp",
+    "UnaryOp": "UnaryOp",
+    "JSONSchemaPrimitiveType": "JSONSchemaPrimitiveType",
 }
 autoclass_content = "both"
 
