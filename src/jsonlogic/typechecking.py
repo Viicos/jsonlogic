@@ -24,7 +24,7 @@ DiagnosticType: TypeAlias = Literal["error", "warning", "information"]
 A diagnostic is thus not necessarily an error. In the future, other types might be supported.
 """
 
-DiagnosticCategory: TypeAlias = Literal["general", "argument_type", "not_comparable", "unresolvable_variable"]
+DiagnosticCategory: TypeAlias = Literal["general", "argument_type", "operator", "unresolvable_variable"]
 """The category of a diagnostic. For generic diagnostics, ``"general"`` can be used."""
 
 
@@ -58,8 +58,8 @@ class DiagnosticsConfig(TypedDict, total=False):
     Default: :python:`"error"`.
     """
 
-    not_comparable: DiagnosticType | None
-    """Arguments are not comparable.
+    operator: DiagnosticType | None
+    """Operator not supported for type(s).
 
     Default: :python:`"error"`.
     """
@@ -130,7 +130,7 @@ default_settings: SettingsDict = {
     },
     "diagnostics": {
         "argument_type": "error",
-        "not_comparable": "error",
+        "operator": "error",
     },
 }
 

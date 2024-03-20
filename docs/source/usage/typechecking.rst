@@ -55,7 +55,12 @@ JSON types are represented (e.g. :class:`~jsonlogic.json_schema.types.BooleanTyp
 the module extends on the different `formats <https://json-schema.org/understanding-json-schema/reference/string#format>`_
 to allow operators to work with specific formats (e.g. ``"date"`` and ``"date-time"``).
 
-Union types are also supported::
+Compound types
+^^^^^^^^^^^^^^
+
+Compound types are also supported to some extent. This includes:
+
+- Union types::
 
     from jsonlogic.json_schema.types import BooleanType, NullType, UnionType
 
@@ -63,9 +68,9 @@ Union types are also supported::
 
     assert UnionType(BooleanType(), NullType()) == bool_or_null
 
-Some simple heuristics are also implemented::
+  with some heuristics implemented::
 
-    assert UnionType(NullType(), NullType()) == NullType()
+      assert UnionType(NullType(), NullType()) == NullType()
 
 .. _converting types specifier:
 
