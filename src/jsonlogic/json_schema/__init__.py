@@ -1,6 +1,8 @@
-from types import NoneType
+from __future__ import annotations
+
 from typing import Any, Callable, cast
 
+from jsonlogic._compat import NoneType
 from jsonlogic.typing import JSONLogicPrimitive
 
 from .types import (

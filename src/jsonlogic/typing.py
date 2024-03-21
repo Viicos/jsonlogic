@@ -12,14 +12,14 @@ if TYPE_CHECKING:
 
     from jsonlogic.core import Operator
 
-JSONPrimitive: TypeAlias = str | int | float | bool | None
+JSONPrimitive: TypeAlias = "str | int | float | bool | None"
 """A JSON Primitive."""
 
 JSONObject: TypeAlias = "dict[str, JSON]"
 JSONArray: TypeAlias = "list[JSON]"
 JSON: TypeAlias = "JSONPrimitive | JSONArray | JSONObject"
 
-JSONLogicPrimitive: TypeAlias = JSONPrimitive | list[JSONPrimitive]
+JSONLogicPrimitive: TypeAlias = "JSONPrimitive | list[JSONPrimitive]"
 """A JSON Logic primitive is defined as either a JSON primitive or a list of JSON primitives.
 
 Such primitives are only considered when dealing with operator arguments:

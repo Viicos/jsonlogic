@@ -1,6 +1,8 @@
 """The main operator registry class and related exceptions."""
 
-from typing import Callable, overload
+from __future__ import annotations
+
+from typing import Callable, Type, TypeVar, overload
 
 from ._compat import Self, TypeAlias
 from .core import Operator
@@ -20,7 +22,9 @@ class UnkownOperator(Exception):
         self.operator_id = operator_id
 
 
-OperatorType: TypeAlias = type[Operator]
+OperatorType: TypeAlias = Type[Operator]
+
+OperatorTypeT = TypeVar("OperatorTypeT", bound=Type[Operator])
 
 
 class OperatorRegistry:
@@ -44,19 +48,19 @@ class OperatorRegistry:
         self._registry: dict[str, OperatorType] = {}
 
     @overload
-    def register(self, operator_id: str, *, force: bool = ...) -> Callable[[OperatorType], OperatorType]: ...
+    def register(self, operator_id: str, *, force: bool = ...) -> Callable[[OperatorTypeT], OperatorTypeT]: ...
 
     @overload
-    def register(self, operator_id: str, operator_type: OperatorType, *, force: bool = ...) -> OperatorType: ...
+    def register(self, operator_id: str, operator_type: OperatorTypeT, *, force: bool = ...) -> OperatorTypeT: ...
 
     def register(
-        self, operator_id: str, operator_type: OperatorType | None = None, *, force: bool = False
-    ) -> Callable[[OperatorType], OperatorType] | OperatorType:
+        self, operator_id: str, operator_type: OperatorTypeT | None = None, *, force: bool = False
+    ) -> Callable[[OperatorTypeT], OperatorTypeT] | OperatorTypeT:
         """Register an operator type under the provided ID.
 
         Args:
             operator_id: The ID to be used to register the operator.
-            operator_type: Type class of the operator. If not provided,
+            operator_type: The class object of the operator. If not provided,
                 will return a callable to be applied on an operator class.
             force: Whether to override any existing operator under the provided ID.
 
@@ -79,7 +83,7 @@ class OperatorRegistry:
 
         if operator_type is None:
 
-            def dec(operator_type: OperatorType, /) -> OperatorType:
+            def dec(operator_type: OperatorTypeT, /) -> OperatorTypeT:
                 return self.register(operator_id, operator_type)
 
             return dec
@@ -104,9 +108,36 @@ class OperatorRegistry:
         except KeyError:
             raise UnkownOperator(operator_id)  # noqa: B904
 
+    def remove(self, operator_id: str, /) -> None:
+        """Remove the operator from the registry.
+
+        Args:
+            operator_id: The registered ID of the operator to be removed.
+        """
+
+        self._registry.pop(operator_id, None)
+
     def copy(self) -> Self:
         """Create a new instance of the registry."""
 
         new = self.__class__()
         new._registry = self._registry.copy()
+        return new
+
+    def with_operator(self, operator_id: str, operator_type: OperatorType, *, force: bool = False) -> Self:
+        """Create a new instance of the registry with the provided operator.
+
+        Args:
+            operator_id: The ID to be used to register the operator.
+            operator_type: The class object of the operator.
+            force: Whether to override any existing operator under the provided ID.
+
+        Raises:
+            AlreadyRegistered: If :paramref:`force` wasn't set and the ID already exists.
+
+        Returns:
+            A new instance of the registry.
+        """
+        new = self.copy()
+        new.register(operator_id, operator_type, force=force)
         return new
