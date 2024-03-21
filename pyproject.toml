@@ -76,3 +76,7 @@ known-first-party = ["jsonlogic"]
 
 [tool.pyright]
 reportTypedDictNotRequiredAccess = "none"  # until partial typeddicts lands
+
+[tool.pytest.ini_options]
+pythonpath = "src"
+

@@ -56,7 +56,7 @@ class OperatorRegistry:
 
         Args:
             operator_id: The ID to be used to register the operator.
-            operator_type: Type class of the operator. If not provided,
+            operator_type: The class object of the operator. If not provided,
                 will return a callable to be applied on an operator class.
             force: Whether to override any existing operator under the provided ID.
 
@@ -104,9 +104,36 @@ class OperatorRegistry:
         except KeyError:
             raise UnkownOperator(operator_id)  # noqa: B904
 
+    def remove(self, operator_id: str, /) -> None:
+        """Remove the operator from the registry.
+
+        Args:
+            operator_id: The registered ID of the operator to be removed.
+        """
+
+        self._registry.pop(operator_id, None)
+
     def copy(self) -> Self:
         """Create a new instance of the registry."""
 
         new = self.__class__()
         new._registry = self._registry.copy()
+        return new
+
+    def with_operator(self, operator_id: str, operator_type: OperatorType, *, force: bool = False) -> Self:
+        """Create a new instance of the registry with the provided operator.
+
+        Args:
+            operator_id: The ID to be used to register the operator.
+            operator_type: The class object of the operator.
+            force: Whether to override any existing operator under the provided ID.
+
+        Raises:
+            AlreadyRegistered: If :paramref:`force` wasn't set and the ID already exists.
+
+        Returns:
+            A new instance of the registry.
+        """
+        new = self.copy()
+        new.register(operator_id, operator_type, force=force)
         return new
