@@ -1,6 +1,8 @@
 """The main operator registry class and related exceptions."""
 
-from typing import Callable, overload
+from __future__ import annotations
+
+from typing import Callable, Type, TypeVar, overload
 
 from ._compat import Self, TypeAlias
 from .core import Operator
@@ -20,7 +22,9 @@ class UnkownOperator(Exception):
         self.operator_id = operator_id
 
 
-OperatorType: TypeAlias = type[Operator]
+OperatorType: TypeAlias = Type[Operator]
+
+OperatorTypeT = TypeVar("OperatorTypeT", bound=Type[Operator])
 
 
 class OperatorRegistry:
@@ -44,14 +48,14 @@ class OperatorRegistry:
         self._registry: dict[str, OperatorType] = {}
 
     @overload
-    def register(self, operator_id: str, *, force: bool = ...) -> Callable[[OperatorType], OperatorType]: ...
+    def register(self, operator_id: str, *, force: bool = ...) -> Callable[[OperatorTypeT], OperatorTypeT]: ...
 
     @overload
-    def register(self, operator_id: str, operator_type: OperatorType, *, force: bool = ...) -> OperatorType: ...
+    def register(self, operator_id: str, operator_type: OperatorTypeT, *, force: bool = ...) -> OperatorTypeT: ...
 
     def register(
-        self, operator_id: str, operator_type: OperatorType | None = None, *, force: bool = False
-    ) -> Callable[[OperatorType], OperatorType] | OperatorType:
+        self, operator_id: str, operator_type: OperatorTypeT | None = None, *, force: bool = False
+    ) -> Callable[[OperatorTypeT], OperatorTypeT] | OperatorTypeT:
         """Register an operator type under the provided ID.
 
         Args:
@@ -79,7 +83,7 @@ class OperatorRegistry:
 
         if operator_type is None:
 
-            def dec(operator_type: OperatorType, /) -> OperatorType:
+            def dec(operator_type: OperatorTypeT, /) -> OperatorTypeT:
                 return self.register(operator_id, operator_type)
 
             return dec

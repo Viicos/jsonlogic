@@ -59,7 +59,7 @@ def test_get_unknown():
     with pytest.raises(UnkownOperator) as exc:
         registry.get("unknown")
 
-    assert exc.value.operator_id == "unkown"
+    assert exc.value.operator_id == "unknown"
 
 
 def test_remove():
