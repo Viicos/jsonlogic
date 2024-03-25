@@ -89,12 +89,19 @@ def test_copy():
     assert copy._registry == registry._registry
 
 
-def test_with_operator():
+def test_copy_with_operator():
     class Var(Operator):
         pass
 
     registry = OperatorRegistry()
 
-    copy = registry.with_operator("var", Var)
+    copy_dict = registry.copy(extend={"var": Var})
 
-    assert copy._registry == {"var": Var}
+    assert copy_dict._registry == {"var": Var}
+
+    other = OperatorRegistry()
+    other.register("var", Var)
+
+    copy_registry = registry.copy(extend=other)
+
+    assert copy_registry._registry == {"var": Var}
