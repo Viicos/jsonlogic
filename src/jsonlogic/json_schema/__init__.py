@@ -5,14 +5,27 @@ from typing import Any, Callable, cast
 from jsonlogic._compat import NoneType
 from jsonlogic.typing import JSONLogicPrimitive
 
+from .resolvers import JSONSchemaDotResolver, JSONSchemaPointerResolver, JSONSchemaResolver, Unresolvable
 from .types import (
     AnyType,
+    ArrayType,
     BooleanType,
     IntegerType,
     JSONSchemaType,
     NullType,
     NumberType,
     StringType,
+    TupleType,
+    UnionType,
+)
+
+__all__ = (
+    "JSONSchemaDotResolver",
+    "JSONSchemaPointerResolver",
+    "JSONSchemaResolver",
+    "Unresolvable",
+    "from_json_schema",
+    "from_value",
 )
 
 _VALUE_TYPE_MAP: dict[type[Any], type[JSONSchemaType]] = {
@@ -43,7 +56,7 @@ def from_value(
     return AnyType()
 
 
-_TYPE_MAP: dict[str, type[JSONSchemaType]] = {
+_PRIMITIVES_TYPE_MAP: dict[str, type[JSONSchemaType]] = {
     "boolean": BooleanType,
     "number": NumberType,
     "integer": IntegerType,
@@ -52,17 +65,37 @@ _TYPE_MAP: dict[str, type[JSONSchemaType]] = {
 
 
 def from_json_schema(json_schema: dict[str, Any], variable_casts: dict[str, type[JSONSchemaType]]) -> JSONSchemaType:
-    # TODO support for unions
-    js_type = cast(str | None, json_schema.get("type"))
-    if js_type in _TYPE_MAP:
-        return _TYPE_MAP[js_type]()
+    js_types = cast("list[str] | str | None", json_schema.get("type"))
+    if js_types is None:
+        return AnyType()
 
-    if js_type == "string":
-        format = cast(str | None, json_schema.get("format"))
+    if not isinstance(js_types, list):
+        js_types = [js_types]
 
-        if format in variable_casts:
-            return variable_casts[format]()
+    def _from_type(js_type: str, json_schema: dict[str, Any]) -> JSONSchemaType:
+        if js_type in _PRIMITIVES_TYPE_MAP:
+            return _PRIMITIVES_TYPE_MAP[js_type]()
 
-        return StringType()
+        if js_type == "string":
+            format = cast("str | None", json_schema.get("format"))
+            if format in variable_casts:
+                return variable_casts[format]()
 
-    return AnyType()
+            return StringType()
+
+        if js_type == "array":
+            items_type = cast("dict[str, Any] | None", json_schema.get("items"))
+            if items_type is None:
+                prefix_items = cast("list[dict[str, Any]] | None", json_schema.get("prefixItems"))
+                min_items = cast("int | None", json_schema.get("minItems"))
+                max_items = cast("int | None", json_schema.get("maxItems"))
+                if prefix_items is not None and min_items is not None and min_items == max_items:
+                    return TupleType(tuple(from_json_schema(item, variable_casts) for item in prefix_items))
+
+                return ArrayType(AnyType())
+
+            return ArrayType(from_json_schema(items_type, variable_casts))
+
+        return AnyType()
+
+    return UnionType(*(_from_type(js_type, json_schema) for js_type in js_types))

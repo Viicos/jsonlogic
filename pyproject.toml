@@ -68,7 +68,8 @@ select = [
     "PTH",    # flake8-use-pathlib
 ]
 ignore = [
-    "PLR2004"
+    "PLR2004",
+    "PLR0911",
 ]
 
 [tool.ruff.lint.isort]
@@ -79,4 +80,3 @@ reportTypedDictNotRequiredAccess = "none"  # until partial typeddicts lands
 
 [tool.pytest.ini_options]
 pythonpath = "src"
-

@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Callable, ClassVar, Literal, NoReturn, TypeVar, overload
+from typing import Callable, ClassVar, Generic, Literal, NoReturn, TypeVar, overload
 
-from jsonlogic._compat import Self, TypeAlias
+from jsonlogic._compat import Self, TypeAlias, TypeVarTuple, Unpack
 
 JSONSchemaPrimitiveTypeT = TypeVar(
     "JSONSchemaPrimitiveTypeT",
@@ -140,11 +140,39 @@ class JSONSchemaPrimitiveType(JSONSchemaType, ABC):
 
 
 @dataclass(frozen=True)
-class ArrayType(JSONSchemaPrimitiveType):
+class ArrayType(JSONSchemaPrimitiveType, Generic[JSONSchemaTypeT]):
     name: ClassVar[str] = "array"
 
-    elements_type: JSONSchemaType
+    elements_type: JSONSchemaTypeT
     """The type of the elements of the array."""
+
+    def binary_op(self, other: JSONSchemaType, op: BinaryOp) -> NoReturn:
+        raise UnsupportedOperation
+
+    def unary_op(self, op: UnaryOp) -> JSONSchemaType:
+        if op == "bool":
+            return BooleanType()
+        raise UnsupportedOperation
+
+
+# Bound to JSONSchemaType:
+TupleTs = TypeVarTuple("TupleTs")
+
+
+@dataclass(frozen=True)
+class TupleType(JSONSchemaPrimitiveType, Generic[Unpack[TupleTs]]):
+    name: ClassVar[str] = "tuple"
+
+    tuple_types: tuple[Unpack[TupleTs]]
+    """The types of the tuple."""
+
+    def binary_op(self, other: JSONSchemaType, op: BinaryOp) -> NoReturn:
+        raise UnsupportedOperation
+
+    def unary_op(self, op: UnaryOp) -> JSONSchemaType:
+        if op == "bool":
+            return BooleanType()
+        raise UnsupportedOperation
 
 
 @dataclass(frozen=True)
@@ -197,7 +225,8 @@ class NumberType(JSONSchemaPrimitiveType):
 class IntegerType(JSONSchemaPrimitiveType):
     name: ClassVar[str] = "integer"
 
-    def binary_op(self, other: JSONSchemaType, op: BinaryOp) -> JSONSchemaType:
+    @unpack_union
+    def binary_op(self, other: JSONSchemaPrimitiveType, op: BinaryOp) -> JSONSchemaType:
         if not isinstance(other, (NumberType, IntegerType)):
             raise UnsupportedOperation
         if op in {">", ">=", "<", "<="}:
@@ -233,7 +262,8 @@ class StringType(JSONSchemaPrimitiveType):
 class DatetimeType(JSONSchemaPrimitiveType):
     name: ClassVar[str] = "datetime"
 
-    def binary_op(self, other: JSONSchemaType, op: BinaryOp) -> JSONSchemaType:
+    @unpack_union
+    def binary_op(self, other: JSONSchemaPrimitiveType, op: BinaryOp) -> JSONSchemaType:
         if isinstance(other, DatetimeType):
             if op in {">", ">=", "<", "<="}:
                 return BooleanType()
@@ -251,7 +281,8 @@ class DatetimeType(JSONSchemaPrimitiveType):
 class DateType(JSONSchemaPrimitiveType):
     name: ClassVar[str] = "date"
 
-    def binary_op(self, other: JSONSchemaType, op: BinaryOp) -> JSONSchemaType:
+    @unpack_union
+    def binary_op(self, other: JSONSchemaPrimitiveType, op: BinaryOp) -> JSONSchemaType:
         if isinstance(other, DateType):
             if op in {">", ">=", "<", "<="}:
                 return BooleanType()
@@ -269,7 +300,8 @@ class DateType(JSONSchemaPrimitiveType):
 class DurationType(JSONSchemaPrimitiveType):
     name: ClassVar[str] = "duration"
 
-    def binary_op(self, other: JSONSchemaType, op: BinaryOp) -> JSONSchemaType:
+    @unpack_union
+    def binary_op(self, other: JSONSchemaPrimitiveType, op: BinaryOp) -> JSONSchemaType:
         if isinstance(other, DurationType):
             if op in {">", ">=", "<", "<="}:
                 return BooleanType()
