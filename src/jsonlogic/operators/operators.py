@@ -8,7 +8,7 @@ from typing import Any, Callable, ClassVar
 from jsonlogic._compat import Self
 from jsonlogic.core import JSONLogicSyntaxError, Operator
 from jsonlogic.json_schema import from_json_schema, from_value
-from jsonlogic.json_schema.resolvers import JSONSchemaPointerResolver, JSONSchemaResolver, Unresolvable
+from jsonlogic.json_schema.resolvers import Unresolvable
 from jsonlogic.json_schema.types import AnyType, BinaryOp, BooleanType, JSONSchemaType, UnsupportedOperation
 from jsonlogic.typing import OperatorArgument
 from jsonlogic.utils import UNSET, UnsetType
@@ -18,8 +18,6 @@ from ..typechecking import TypecheckContext, get_type
 
 @dataclass
 class Var(Operator):
-    json_schema_resolver: ClassVar[type[JSONSchemaResolver]] = JSONSchemaPointerResolver
-
     variable_path: str | Operator
 
     default_value: OperatorArgument | UnsetType = UNSET
@@ -41,10 +39,20 @@ class Var(Operator):
             self.variable_path.typecheck(context)
             return AnyType()
 
-        resolver = self.json_schema_resolver(context.data_stack)
+        resolver = context.json_schema_resolver
+
+        default_value_type: JSONSchemaType | None
+        if self.default_value is not UNSET:
+            default_value_type = (
+                self.default_value.typecheck(context)
+                if isinstance(self.default_value, Operator)
+                else from_value(self.default_value, context.settings["literal_casts"])
+            )
+        else:
+            default_value_type = None
 
         try:
-            js_type = resolver.resolve(self.variable_path)
+            schema = resolver.resolve(self.variable_path)
         except Unresolvable:
             if self.default_value is UNSET:
                 context.add_diagnostic(
@@ -53,11 +61,17 @@ class Var(Operator):
                     self,
                 )
                 return AnyType()
-            if isinstance(self.default_value, Operator):
-                return self.default_value.typecheck(context)
-            return from_value(self.default_value, context.settings["literal_casts"])
+
+            # We emit a diagnostic but as a warning, as this will not fail at runtime
+            context.add_diagnostic(
+                f"{self.variable_path} is unresolvable", "unresolvable_variable", self, type="warning"
+            )
+            return default_value_type  # type: ignore
         else:
-            return from_json_schema(js_type, context.settings["variable_casts"])
+            js_type = from_json_schema(schema, context.settings["variable_casts"])
+            if default_value_type is not None:
+                return js_type | default_value_type
+            return js_type
 
 
 @dataclass

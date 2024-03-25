@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Callable, ClassVar, Generic, Literal, NoReturn, TypeVar, overload
+from typing import Callable, Generic, Literal, NoReturn, TypeVar, overload
 
 from jsonlogic._compat import Self, TypeAlias, TypeVarTuple, Unpack
 
@@ -52,8 +52,10 @@ def unpack_union(
 
 
 class JSONSchemaType(ABC):
-    name: ClassVar[str]
-    """The verbose name of the type to be used in diagnostic messages."""
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        """The verbose name of the type to be used in diagnostic messages."""
 
     @abstractmethod
     def binary_op(self, other: JSONSchemaType, op: BinaryOp, /) -> JSONSchemaType:
@@ -91,8 +93,6 @@ class JSONSchemaType(ABC):
 
 
 class UnionType(JSONSchemaType):
-    name: ClassVar[str] = "union"
-
     types: set[JSONSchemaPrimitiveType]
 
     @overload
@@ -121,6 +121,10 @@ class UnionType(JSONSchemaType):
     def __repr__(self) -> str:
         return f"{self.__class__.__qualname__}({', '.join(str(t) for t in self.types)})"
 
+    @property
+    def name(self) -> str:
+        return f"union({', '.join(t.name for t in self.types)})"
+
     def binary_op(self, other: JSONSchemaType, op: BinaryOp) -> JSONSchemaType:
         result_types: list[JSONSchemaType] = []
         for typ in self.types:
@@ -141,10 +145,12 @@ class JSONSchemaPrimitiveType(JSONSchemaType, ABC):
 
 @dataclass(frozen=True)
 class ArrayType(JSONSchemaPrimitiveType, Generic[JSONSchemaTypeT]):
-    name: ClassVar[str] = "array"
-
     elements_type: JSONSchemaTypeT
     """The type of the elements of the array."""
+
+    @property
+    def name(self) -> str:
+        return f"array{self.elements_type.name}"
 
     def binary_op(self, other: JSONSchemaType, op: BinaryOp) -> NoReturn:
         raise UnsupportedOperation
@@ -161,10 +167,12 @@ TupleTs = TypeVarTuple("TupleTs")
 
 @dataclass(frozen=True)
 class TupleType(JSONSchemaPrimitiveType, Generic[Unpack[TupleTs]]):
-    name: ClassVar[str] = "tuple"
-
     tuple_types: tuple[Unpack[TupleTs]]
     """The types of the tuple."""
+
+    @property
+    def name(self) -> str:
+        return f"tuple({', '.join(t.name for t in self.tuple_types)})"  # type: ignore
 
     def binary_op(self, other: JSONSchemaType, op: BinaryOp) -> NoReturn:
         raise UnsupportedOperation
@@ -177,7 +185,9 @@ class TupleType(JSONSchemaPrimitiveType, Generic[Unpack[TupleTs]]):
 
 @dataclass(frozen=True)
 class AnyType(JSONSchemaPrimitiveType):
-    name: ClassVar[str] = "any"
+    @property
+    def name(self) -> str:
+        return "any"
 
     def binary_op(self, other: JSONSchemaType, op: BinaryOp) -> JSONSchemaType:
         return AnyType()
@@ -188,7 +198,9 @@ class AnyType(JSONSchemaPrimitiveType):
 
 @dataclass(frozen=True)
 class BooleanType(JSONSchemaPrimitiveType):
-    name: ClassVar[str] = "boolean"
+    @property
+    def name(self) -> str:
+        return "boolean"
 
     def binary_op(self, other: JSONSchemaType, op: BinaryOp) -> NoReturn:
         raise UnsupportedOperation
@@ -201,7 +213,9 @@ class BooleanType(JSONSchemaPrimitiveType):
 
 @dataclass(frozen=True)
 class NumberType(JSONSchemaPrimitiveType):
-    name: ClassVar[str] = "number"
+    @property
+    def name(self) -> str:
+        return "number"
 
     @unpack_union
     def binary_op(self, other: JSONSchemaPrimitiveType, op: BinaryOp) -> JSONSchemaType:
@@ -223,7 +237,9 @@ class NumberType(JSONSchemaPrimitiveType):
 
 @dataclass(frozen=True)
 class IntegerType(JSONSchemaPrimitiveType):
-    name: ClassVar[str] = "integer"
+    @property
+    def name(self) -> str:
+        return "integer"
 
     @unpack_union
     def binary_op(self, other: JSONSchemaPrimitiveType, op: BinaryOp) -> JSONSchemaType:
@@ -247,7 +263,9 @@ class IntegerType(JSONSchemaPrimitiveType):
 
 @dataclass(frozen=True)
 class StringType(JSONSchemaPrimitiveType):
-    name: ClassVar[str] = "string"
+    @property
+    def name(self) -> str:
+        return "string"
 
     def binary_op(self, other: JSONSchemaType, op: BinaryOp) -> NoReturn:
         raise UnsupportedOperation
@@ -260,7 +278,9 @@ class StringType(JSONSchemaPrimitiveType):
 
 @dataclass(frozen=True)
 class DatetimeType(JSONSchemaPrimitiveType):
-    name: ClassVar[str] = "datetime"
+    @property
+    def name(self) -> str:
+        return "datetime"
 
     @unpack_union
     def binary_op(self, other: JSONSchemaPrimitiveType, op: BinaryOp) -> JSONSchemaType:
@@ -279,7 +299,9 @@ class DatetimeType(JSONSchemaPrimitiveType):
 
 @dataclass(frozen=True)
 class DateType(JSONSchemaPrimitiveType):
-    name: ClassVar[str] = "date"
+    @property
+    def name(self) -> str:
+        return "date"
 
     @unpack_union
     def binary_op(self, other: JSONSchemaPrimitiveType, op: BinaryOp) -> JSONSchemaType:
@@ -298,7 +320,9 @@ class DateType(JSONSchemaPrimitiveType):
 
 @dataclass(frozen=True)
 class DurationType(JSONSchemaPrimitiveType):
-    name: ClassVar[str] = "duration"
+    @property
+    def name(self) -> str:
+        return "duration"
 
     @unpack_union
     def binary_op(self, other: JSONSchemaPrimitiveType, op: BinaryOp) -> JSONSchemaType:
@@ -319,7 +343,9 @@ class DurationType(JSONSchemaPrimitiveType):
 
 @dataclass(frozen=True)
 class NullType(JSONSchemaPrimitiveType):
-    name: ClassVar[str] = "null"
+    @property
+    def name(self) -> str:
+        return "null"
 
     def binary_op(self, other: JSONSchemaType, op: BinaryOp) -> NoReturn:
         raise UnsupportedOperation

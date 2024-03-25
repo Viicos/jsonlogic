@@ -9,7 +9,7 @@ from typing import Any, Callable, Literal, TypedDict
 
 from ._compat import TypeAlias
 from .core import Operator
-from .json_schema import from_value
+from .json_schema import JSONSchemaPointerResolver, JSONSchemaResolver, from_value
 from .json_schema.types import DatetimeType, DateType, DurationType, JSONSchemaType
 from .typing import OperatorArgument
 from .utils import DataStack
@@ -80,6 +80,12 @@ class SettingsDict(TypedDict, total=False):
     # Default: ``False``.
     # """
 
+    variable_resolver: type[JSONSchemaResolver]
+    """A JSON Schema variable resolver to use when resolving variables.
+
+    Default: :class:`JSONSchemaPointerResolver`.
+    """
+
     variable_casts: dict[str, type[JSONSchemaType]]
     """A mapping between `JSON Schema formats`_ and their corresponding
     :class:`~jsonlogic.json_schema.types.JSONSchemaType`.
@@ -120,6 +126,7 @@ class SettingsDict(TypedDict, total=False):
 
 
 default_settings: SettingsDict = {
+    "variable_resolver": JSONSchemaPointerResolver,
     "variable_casts": {
         "date": DateType,
         "date-time": DatetimeType,
@@ -166,6 +173,7 @@ class TypecheckContext:
     def __init__(self, root_data_schema: dict[str, Any], settings: SettingsDict | None = None) -> None:
         self.data_stack = DataStack(root_data_schema)
         self.settings = self._merge_settings(settings, default_settings) if settings is not None else default_settings
+        self.json_schema_resolver = self.settings["variable_resolver"](self.data_stack)
         self.diagnostics: list[Diagnostic] = []
 
     def _merge_settings(self, settings: SettingsDict, defaults: SettingsDict) -> SettingsDict:
