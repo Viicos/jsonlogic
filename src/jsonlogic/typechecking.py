@@ -10,7 +10,7 @@ from typing import Any, Callable, Literal, TypedDict
 from ._compat import TypeAlias
 from .core import Operator
 from .json_schema import from_value
-from .json_schema.types import DatetimeType, DateType, JSONSchemaType
+from .json_schema.types import DatetimeType, DateType, DurationType, JSONSchemaType
 from .typing import OperatorArgument
 from .utils import DataStack
 
@@ -123,6 +123,7 @@ default_settings: SettingsDict = {
     "variable_casts": {
         "date": DateType,
         "date-time": DatetimeType,
+        "duration": DurationType,
     },
     "literal_casts": {
         datetime.fromisoformat: DatetimeType,

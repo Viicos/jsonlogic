@@ -1,6 +1,10 @@
+from __future__ import annotations
+
 import enum
 from contextlib import contextmanager
-from typing import Generic, Iterator, Literal, TypeAlias, TypeVar
+from typing import Generic, Iterator, Literal, TypeVar
+
+from ._compat import TypeAlias
 
 
 class _UnsetTypeEnum(enum.Enum):
@@ -28,6 +32,9 @@ class DataStack(Generic[DataT]):
     @property
     def tail(self) -> DataT:
         return self._stack[-1]
+
+    def get(self, index: int, /) -> DataT:
+        return self._stack[-index - 1]
 
     @contextmanager
     def push(self, data: DataT) -> Iterator[None]:
