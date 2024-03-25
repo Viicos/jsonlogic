@@ -117,27 +117,22 @@ class OperatorRegistry:
 
         self._registry.pop(operator_id, None)
 
-    def copy(self) -> Self:
-        """Create a new instance of the registry."""
-
-        new = self.__class__()
-        new._registry = self._registry.copy()
-        return new
-
-    def with_operator(self, operator_id: str, operator_type: OperatorType, *, force: bool = False) -> Self:
-        """Create a new instance of the registry with the provided operator.
+    def copy(self, *, extend: OperatorRegistry | dict[str, OperatorType] | None = None, force: bool = False) -> Self:
+        """Create a new instance of the registry.
 
         Args:
-            operator_id: The ID to be used to register the operator.
-            operator_type: The class object of the operator.
-            force: Whether to override any existing operator under the provided ID.
-
-        Raises:
-            AlreadyRegistered: If :paramref:`force` wasn't set and the ID already exists.
+            - extend: A registry or a mapping to use to register new operators
+                while doing the copy.
+            - force: Whether to override any existing operator under the provided ID.
 
         Returns:
             A new instance of the registry.
         """
-        new = self.copy()
-        new.register(operator_id, operator_type, force=force)
+
+        new = self.__class__()
+        new._registry = self._registry.copy()
+        overrides = extend._registry if isinstance(extend, OperatorRegistry) else extend
+        if overrides is not None:
+            for id, operator in overrides.items():
+                new.register(operator_id=id, operator_type=operator, force=force)
         return new
