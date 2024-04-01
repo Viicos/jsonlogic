@@ -92,7 +92,7 @@ class SettingsDict(TypedDict, total=False):
 
     When an operator makes use of the provided data JSON Schema to read variables
     (such as the ``"var"`` operator), such variables with a type of `"string"`
-    might have a format provided. To allow for features specific for these formats,
+    might have a format provided. To allow for features specific to these formats,
     such strings can be inferred as a specific JSON :class:`~jsonlogic.json_schema.types.JSONSchemaType`.
 
     Default: :python:`{"date": DateType, "date-time": DatetimeType}`.

@@ -107,10 +107,16 @@ class UnionType(JSONSchemaType):
 
     def __new__(cls, type, *types):
         types = [type, *types]
-        if all(isinstance(t, type(types[0])) for t in types):
+        if any(isinstance(t, AnyType) for t in types):
+            # TODO at some point we might allow
+            # smarter unions, e.g. NumberType() | IntegerType() == NumberType()
+            return AnyType()
+        if all(t == types[0] for t in types):
             return types[0]
+
         self = super().__new__(cls)
         self.types = set()
+
         for typ in types:
             if isinstance(typ, UnionType):
                 self.types.update(typ.types)
@@ -119,7 +125,12 @@ class UnionType(JSONSchemaType):
         return self
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__qualname__}({', '.join(str(t) for t in self.types)})"
+        return f"{self.__class__.__qualname__}({', '.join(repr(t) for t in self.types)})"
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, UnionType):
+            return NotImplemented
+        return self.types == other.types
 
     @property
     def name(self) -> str:
@@ -150,7 +161,7 @@ class ArrayType(JSONSchemaPrimitiveType, Generic[JSONSchemaTypeT]):
 
     @property
     def name(self) -> str:
-        return f"array{self.elements_type.name}"
+        return f"array({self.elements_type.name})"
 
     def binary_op(self, other: JSONSchemaType, op: BinaryOp) -> NoReturn:
         raise UnsupportedOperation
@@ -167,6 +178,9 @@ TupleTs = TypeVarTuple("TupleTs")
 
 @dataclass(frozen=True)
 class TupleType(JSONSchemaPrimitiveType, Generic[Unpack[TupleTs]]):
+    # Note: `*args` could be used for ease of use (TupleType(t1, t2, ...)).
+    # However, it would require a hacky workaround (https://stackoverflow.com/a/58336722)
+    # and type checkers complain about unpacked arguments matching a TypeVarTuple
     tuple_types: tuple[Unpack[TupleTs]]
     """The types of the tuple."""
 
