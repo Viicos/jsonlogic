@@ -3,17 +3,17 @@ from __future__ import annotations
 from jsonlogic.registry import OperatorRegistry
 
 from .operators import (
-    DivisionOperator,
-    EqualOperator,
+    Division,
+    Equal,
     GreaterThan,
     GreaterThanOrEqual,
-    IfOperator,
+    If,
     LessThan,
     LessThanOrEqual,
-    MinusOperator,
-    ModuloOperator,
-    NotEqualOperator,
-    PlusOperator,
+    Minus,
+    Modulo,
+    NotEqual,
+    Plus,
     Var,
 )
 
@@ -23,14 +23,14 @@ operator_registry = OperatorRegistry()
 """The default operator registry."""
 
 operator_registry.register("var", Var)
-operator_registry.register("==", EqualOperator)
-operator_registry.register("!=", NotEqualOperator)
-operator_registry.register("if", IfOperator)
+operator_registry.register("==", Equal)
+operator_registry.register("!=", NotEqual)
+operator_registry.register("if", If)
 operator_registry.register(">", GreaterThan)
 operator_registry.register(">=", GreaterThanOrEqual)
 operator_registry.register("<", LessThan)
 operator_registry.register("<=", LessThanOrEqual)
-operator_registry.register("+", PlusOperator)
-operator_registry.register("-", MinusOperator)
-operator_registry.register("/", DivisionOperator)
-operator_registry.register("%", ModuloOperator)
+operator_registry.register("+", Plus)
+operator_registry.register("-", Minus)
+operator_registry.register("/", Division)
+operator_registry.register("%", Modulo)

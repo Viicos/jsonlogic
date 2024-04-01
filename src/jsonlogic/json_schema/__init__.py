@@ -63,6 +63,11 @@ _PRIMITIVES_TYPE_MAP: dict[str, type[JSONSchemaType]] = {
     "null": NullType,
 }
 
+_R_PRIMITIVES_TYPE_MAP: dict[type[JSONSchemaType], str] = {
+    **{v: k for k, v in _PRIMITIVES_TYPE_MAP.items()},
+    StringType: "string",
+}
+
 
 def from_json_schema(json_schema: dict[str, Any], variable_casts: dict[str, type[JSONSchemaType]]) -> JSONSchemaType:
     js_types = cast("list[str] | str | None", json_schema.get("type"))
@@ -99,3 +104,46 @@ def from_json_schema(json_schema: dict[str, Any], variable_casts: dict[str, type
         return AnyType()
 
     return UnionType(*(_from_type(js_type, json_schema) for js_type in js_types))
+
+
+def as_json_schema(type: JSONSchemaType, variable_casts: dict[str, type[JSONSchemaType]]) -> dict[str, Any]:
+    type_class = type.__class__
+    if type_class in _R_PRIMITIVES_TYPE_MAP:
+        return {"type": _R_PRIMITIVES_TYPE_MAP[type_class]}
+
+    if isinstance(type, AnyType):
+        return {}
+
+    if isinstance(type, UnionType):
+        sub_schemas = [as_json_schema(subtype, variable_casts) for subtype in type.types]
+        types = [
+            sub_schema.pop("type")  # UnionTypes can't have any, so `"type"` is guaranteed to be present
+            for sub_schema in sub_schemas
+        ]
+        schema = {
+            "type": types[0] if len(types) == 1 else types,
+        }
+        for sub_schema in sub_schemas:
+            schema.update(sub_schema)
+        return schema
+
+    if isinstance(type, ArrayType):
+        items_type = as_json_schema(type.elements_type, variable_casts)
+        if items_type:
+            return {"type": "array", "items": items_type}
+        return {"type": "array"}
+
+    if isinstance(type, TupleType):
+        return {
+            "type": "array",
+            "minItems": len(type.tuple_types),
+            "maxItems": len(type.tuple_types),
+            "prefixItems": [as_json_schema(subtype, variable_casts) for subtype in type.tuple_types],
+        }
+
+    r_variable_casts = {v: k for k, v in variable_casts.items()}
+
+    if type_class in r_variable_casts:
+        return {"type": "string", "format": r_variable_casts[type_class]}
+
+    raise RuntimeError(f"Unable to determine JSON Schema for type {type}")

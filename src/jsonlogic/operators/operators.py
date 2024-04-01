@@ -3,13 +3,13 @@ from __future__ import annotations
 import functools
 import operator
 from dataclasses import dataclass
-from typing import Any, Callable, ClassVar
+from typing import Any, Callable, ClassVar, cast
 
 from jsonlogic._compat import Self
 from jsonlogic.core import JSONLogicSyntaxError, Operator
-from jsonlogic.json_schema import from_json_schema, from_value
+from jsonlogic.json_schema import as_json_schema, from_json_schema, from_value
 from jsonlogic.json_schema.resolvers import Unresolvable
-from jsonlogic.json_schema.types import AnyType, BinaryOp, BooleanType, JSONSchemaType, UnsupportedOperation
+from jsonlogic.json_schema.types import AnyType, ArrayType, BinaryOp, BooleanType, JSONSchemaType, UnsupportedOperation
 from jsonlogic.typing import OperatorArgument
 from jsonlogic.utils import UNSET, UnsetType
 
@@ -97,17 +97,17 @@ class EqualityOperator(Operator):
 
 
 @dataclass
-class EqualOperator(EqualityOperator):
+class Equal(EqualityOperator):
     equality_func = operator.eq
 
 
 @dataclass
-class NotEqualOperator(EqualityOperator):
+class NotEqual(EqualityOperator):
     equality_func = operator.ne
 
 
 @dataclass
-class IfOperator(Operator):
+class If(Operator):
     if_elses: list[tuple[OperatorArgument, OperatorArgument]]
     leading_else: OperatorArgument
 
@@ -151,7 +151,7 @@ class BinaryOperator(Operator):
             return left_type.binary_op(right_type, self.operator_symbol)
         except UnsupportedOperation:
             context.add_diagnostic(
-                f"Operator {self.operator_symbol} not supported for types {left_type.name} and {right_type.name}",
+                f'Operator "{self.operator_symbol}" not supported for types {left_type.name} and {right_type.name}',
                 "operator",
                 self,
             )
@@ -194,19 +194,19 @@ class LessThanOrEqual(BinaryOperator):
 
 
 @dataclass
-class DivisionOperator(BinaryOperator):
+class Division(BinaryOperator):
     operator_func = operator.truediv
     operator_symbol = "/"
 
 
 @dataclass
-class ModuloOperator(BinaryOperator):
+class Modulo(BinaryOperator):
     operator_func = operator.mod
     operator_symbol = "%"
 
 
 @dataclass
-class PlusOperator(Operator):
+class Plus(Operator):
     arguments: list[OperatorArgument]
 
     @classmethod
@@ -225,9 +225,9 @@ class PlusOperator(Operator):
                 result_type = result_type.binary_op(typ, "+")
             except UnsupportedOperation:
                 if len(self.arguments) == 2:
-                    msg = f"Operator + not supported for types {result_type.name} and {typ.name}"
+                    msg = f'Operator "+" not supported for types {result_type.name} and {typ.name}'
                 else:
-                    msg = f"Operator + not supported for types {result_type.name} (argument {i}) and {typ.name} (argument {i + 1})"  # noqa: E501
+                    msg = f'Operator "+" not supported for types {result_type.name} (argument {i}) and {typ.name} (argument {i + 1})'  # noqa: E501
                 context.add_diagnostic(
                     msg,
                     "operator",
@@ -239,7 +239,7 @@ class PlusOperator(Operator):
 
 
 @dataclass
-class MinusOperator(Operator):
+class Minus(Operator):
     left: OperatorArgument
     right: OperatorArgument | UnsetType = UNSET
 
@@ -259,7 +259,7 @@ class MinusOperator(Operator):
                 return left_type.unary_op("-")
             except UnsupportedOperation:
                 context.add_diagnostic(
-                    f"Operator - not supported for type {left_type.name}",
+                    f'Operator "-" not supported for type {left_type.name}',
                     "operator",
                     self,
                 )
@@ -271,8 +271,33 @@ class MinusOperator(Operator):
             return left_type.binary_op(right_type, "-")
         except UnsupportedOperation:
             context.add_diagnostic(
-                f"Operator - not supported for type {left_type.name} and {right_type.name}",
+                f'Operator "-" not supported for type {left_type.name} and {right_type.name}',
                 "operator",
                 self,
             )
             return AnyType()
+
+
+@dataclass
+class Map(Operator):
+    vars: OperatorArgument
+    func: OperatorArgument
+
+    @classmethod
+    def from_expression(cls, operator: str, arguments: list[OperatorArgument]) -> Self:
+        if len(arguments) not in {1, 2}:
+            raise JSONLogicSyntaxError(f"{operator!r} expects two arguments, got {len(arguments)}")
+
+        return cls(operator=operator, vars=arguments[0], func=arguments[1])
+
+    def typecheck(self, context: TypecheckContext) -> JSONSchemaType:
+        vars_type = get_type(self.vars, context)
+        if not isinstance(vars_type, ArrayType):
+            context.add_diagnostic(f"The first argument must be of type array, got {vars_type}", "argument_type", self)
+            return AnyType()
+
+        vars_type = cast(ArrayType[JSONSchemaType], vars_type)
+        with context.data_stack.push(as_json_schema(vars_type.elements_type, context.settings["variable_casts"])):
+            func_type = get_type(self.func, context)
+
+        return ArrayType(func_type)
