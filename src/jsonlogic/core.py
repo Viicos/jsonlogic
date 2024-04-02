@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from ._compat import Self, TypeAlias
 from .json_schema.types import AnyType, JSONSchemaType
@@ -44,9 +44,9 @@ class Operator(ABC):
                 for checking the correct number of arguments and optionally the types.
         """
 
-    @abstractmethod
-    def apply(self, data: JSON) -> Any:
-        """Evaluate the operator with the provided data."""
+    # @abstractmethod
+    # def apply(self, data: JSON) -> Any:
+    #     """Evaluate the operator with the provided data."""
 
     def typecheck(self, context: TypecheckContext) -> JSONSchemaType:
         """Typecheck the operator (and all children) given the data schema."""

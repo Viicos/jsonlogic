@@ -10,6 +10,7 @@ from .operators import (
     If,
     LessThan,
     LessThanOrEqual,
+    Map,
     Minus,
     Modulo,
     NotEqual,
@@ -17,7 +18,22 @@ from .operators import (
     Var,
 )
 
-__all__ = ("operator_registry",)
+__all__ = (
+    "Division",
+    "Equal",
+    "GreaterThan",
+    "GreaterThanOrEqual",
+    "If",
+    "LessThan",
+    "LessThanOrEqual",
+    "Map",
+    "Minus",
+    "Modulo",
+    "NotEqual",
+    "Plus",
+    "Var",
+    "operator_registry",
+)
 
 operator_registry = OperatorRegistry()
 """The default operator registry."""
@@ -34,3 +50,4 @@ operator_registry.register("+", Plus)
 operator_registry.register("-", Minus)
 operator_registry.register("/", Division)
 operator_registry.register("%", Modulo)
+operator_registry.register("map", Map)

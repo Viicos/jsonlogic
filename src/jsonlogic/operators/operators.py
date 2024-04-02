@@ -113,7 +113,7 @@ class If(Operator):
 
     @classmethod
     def from_expression(cls, operator: str, arguments: list[OperatorArgument]) -> Self:
-        if len(arguments) % 2 == 1:
+        if len(arguments) % 2 == 0:
             raise JSONLogicSyntaxError(f"{operator!r} expects an odd number of arguments, got {len(arguments)}")
         return cls(operator=operator, if_elses=list(zip(arguments[::2], arguments[1::2])), leading_else=arguments[-1])
 
