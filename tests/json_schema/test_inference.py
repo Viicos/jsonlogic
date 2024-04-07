@@ -91,7 +91,8 @@ def test_from_json_schema(
 
 
 @pytest.mark.parametrize(
-    ["type", "variable_casts", "expected"], [(param[2], param[1], param[0]) for param in json_schema_params]
+    ["type", "variable_casts", "expected"],
+    [(param[2], param[1], param[0]) for param in json_schema_params],  # Arguments order is reversed
 )
 def test_as_json_schema(
     type: JSONSchemaType, variable_casts: dict[str, type[JSONSchemaType]], expected: dict[str, Any]
