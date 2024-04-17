@@ -15,6 +15,7 @@ can be used:
 .. code-block:: python
 
     from jsonlogic import JSONLogicExpression, Operator
+    from jsonlogic.json_schema.types import BooleanType
     from jsonlogic.operators import operator_registry
     from jsonlogic.typechecking import typecheck
 
@@ -35,6 +36,7 @@ can be used:
             "diagnostics": {"argument_type": "warning"},
         }
     )
+    assert root_type == BooleanType()
 
 This function returns a two-tuple, containing:
 
@@ -71,6 +73,18 @@ Compound types are also supported to some extent. This includes:
   with some heuristics implemented::
 
       assert UnionType(NullType(), NullType()) == NullType()
+
+- Array types::
+
+    from jsonlogic.json_schema.types import ArrayType, IntegerType
+
+    array = ArrayType(IntegerType())
+
+  `tuples <https://json-schema.org/understanding-json-schema/reference/array#tupleValidation>`_ are also supported::
+
+      from jsonlogic.json_schema.types import BooleanType, IntegerType, TupleType
+
+      tup = TupleType((BooleanType(), IntegerType()))
 
 .. _converting types specifier:
 
@@ -129,7 +143,7 @@ is not applicable on strings. To overcome this issue, we have two solutions:
 Inference for literals
 ^^^^^^^^^^^^^^^^^^^^^^
 
-The :attr:`~jsonlogic.typechecking.SettingsDict.literal_casts` configuration value
+The :attr:`~jsonlogic.typechecking.TypecheckSettings.literal_casts` configuration value
 can be used to express how inference should work when a string literal is encountered::
 
     from datetime import datetime, date
@@ -151,7 +165,7 @@ With this configuration, whenever a string literal will be encountered during ty
 every function defined in ``"literal_casts"`` will be called, until one of them doesn't raise
 any exception (generally a :exc:`ValueError`).
 
-The default value for :attr:`~jsonlogic.typechecking.SettingsDict.literal_casts` is the one
+The default value for :attr:`~jsonlogic.typechecking.TypecheckSettings.literal_casts` is the one
 given in the example.
 
 .. warning::
@@ -164,7 +178,7 @@ Inference for JSON Schema data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Similarly, any JSON Schema with a specific format can be inferred to a specific type.
-The :attr:`~jsonlogic.typechecking.SettingsDict.variable_casts` controls this behavior::
+The :attr:`~jsonlogic.typechecking.TypecheckSettings.variable_casts` controls this behavior::
 
     from jsonlogic.json_schema.types import DatetimeType, DateType
 
@@ -180,7 +194,7 @@ The :attr:`~jsonlogic.typechecking.SettingsDict.variable_casts` controls this be
     )
 
 Whenever a JSON Schema attribute with a format present in ``"variable_casts"`` is encountered,
-the matching JSON Schema type will be returned.
+the matching JSON Schema type will be returned (assuming it is of type ``"string"``).
 
 .. _diagnostics:
 
