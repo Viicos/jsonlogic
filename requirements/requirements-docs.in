@@ -1,4 +1,5 @@
 -c requirements.txt
+furo
 sphinx
-sphinx-rtd-theme
+sphinx-lint
 sphinx-paramlinks
