@@ -52,6 +52,8 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
 }
 
+linkcheck_retries = 3
+
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
