@@ -46,7 +46,7 @@ class Var(Operator):
             default_value_type = (
                 self.default_value.typecheck(context)
                 if isinstance(self.default_value, Operator)
-                else from_value(self.default_value, context.settings["literal_casts"])
+                else from_value(self.default_value, context.settings.literal_casts)
             )
         else:
             default_value_type = None
@@ -68,7 +68,7 @@ class Var(Operator):
             )
             return default_value_type  # type: ignore
         else:
-            js_type = from_json_schema(schema, context.settings["variable_casts"])
+            js_type = from_json_schema(schema, context.settings.variable_casts)
             if default_value_type is not None:
                 return js_type | default_value_type
             return js_type
@@ -297,7 +297,7 @@ class Map(Operator):
             return AnyType()
 
         vars_type = cast(ArrayType[JSONSchemaType], vars_type)
-        with context.data_stack.push(as_json_schema(vars_type.elements_type, context.settings["variable_casts"])):
+        with context.data_stack.push(as_json_schema(vars_type.elements_type, context.settings.variable_casts)):
             func_type = get_type(self.func, context)
 
         return ArrayType(func_type)
