@@ -14,8 +14,8 @@ jobs:
             python-version: "3.11"
       - name: Install dependencies
         run: |
-          pip install pip-tools
-          pip-sync requirements/requirements.txt requirements/requirements-dev.txt
+          pip install uv
+          uv pip sync --system requirements/requirements.txt requirements/requirements-dev.txt
       - name: Run Ruff formatter
         run: ruff format --diff
 
@@ -30,7 +30,7 @@ jobs:
             python-version: "3.11"
       - name: Install dependencies
         run: |
-          pip install pip-tools
-          pip-sync requirements/requirements.txt requirements/requirements-dev.txt
+          pip install uv
+          uv pip sync --system requirements/requirements.txt requirements/requirements-dev.txt
       - name: Run Ruff formatter
         run: ruff check --output-format=github

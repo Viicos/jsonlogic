@@ -35,6 +35,8 @@ pyproject-api==1.6.1
     # via tox
 pytest==8.1.1
     # via -r requirements/requirements-test.in
+tomli==2.0.1
+    # via -r requirements/requirements-test.in
 tox==4.14.1
     # via
     #   -r requirements/requirements-test.in

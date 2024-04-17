@@ -1,4 +1,5 @@
 -c requirements.txt
 pytest
+tomli
 tox
 tox-gh-actions
