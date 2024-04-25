@@ -7,9 +7,10 @@ from typing import Any, Callable, ClassVar, cast
 
 from jsonlogic._compat import Self
 from jsonlogic.core import JSONLogicSyntaxError, Operator
-from jsonlogic.json_schema import as_json_schema, from_json_schema, from_value
-from jsonlogic.json_schema.resolvers import Unresolvable
+from jsonlogic.evaluation import EvaluationContext
+from jsonlogic.json_schema import as_json_schema, from_json_schema
 from jsonlogic.json_schema.types import AnyType, ArrayType, BinaryOp, BooleanType, JSONSchemaType, UnsupportedOperation
+from jsonlogic.resolving import Unresolvable
 from jsonlogic.typing import OperatorArgument
 from jsonlogic.utils import UNSET, UnsetType
 
@@ -39,24 +40,18 @@ class Var(Operator):
             self.variable_path.typecheck(context)
             return AnyType()
 
-        resolver = context.json_schema_resolver
-
         default_value_type: JSONSchemaType | None
         if self.default_value is not UNSET:
-            default_value_type = (
-                self.default_value.typecheck(context)
-                if isinstance(self.default_value, Operator)
-                else from_value(self.default_value, context.settings.literal_casts)
-            )
+            default_value_type = get_type(self.default_value, context)
         else:
             default_value_type = None
 
         try:
-            schema = resolver.resolve(self.variable_path)
+            schema = context.resolve_variable(self.variable_path)
         except Unresolvable:
-            if self.default_value is UNSET:
+            if default_value_type is None:
                 context.add_diagnostic(
-                    f"{self.variable_path} is unresolvable and not fallback value is provided",
+                    f"{self.variable_path} is unresolvable and no fallback value is provided",
                     "unresolvable_variable",
                     self,
                 )
@@ -66,12 +61,18 @@ class Var(Operator):
             context.add_diagnostic(
                 f"{self.variable_path} is unresolvable", "unresolvable_variable", self, type="warning"
             )
-            return default_value_type  # type: ignore
+            return default_value_type
         else:
             js_type = from_json_schema(schema, context.settings.variable_casts)
             if default_value_type is not None:
                 return js_type | default_value_type
             return js_type
+
+    def evaluate(self, context: EvaluationContext) -> Any:
+        pass
+        # str_path = (
+        #     self.variable_path.evaluate(context) if isinstance(self.variable_path, Operator) else self.variable_path
+        # )
 
 
 @dataclass
@@ -158,15 +159,16 @@ class BinaryOperator(Operator):
 
         return AnyType()
 
-    def apply(self, data) -> bool:
-        left = self.left
-        if isinstance(left, Operator):
-            left = left.apply(data)
-        right = self.right
-        if isinstance(right, Operator):
-            right = right.apply(data)
+    def evaluate(self, context: EvaluationContext) -> bool:
+        return True
+        # left = self.left
+        # if isinstance(left, Operator):
+        #     left = left.evaluate(context)
+        # right = self.right
+        # if isinstance(right, Operator):
+        #     right = right.evaluate(context)
 
-        return self.operator_func(left, right)
+        # return self.operator_func(left, right)
 
 
 @dataclass

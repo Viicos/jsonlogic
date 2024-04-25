@@ -45,7 +45,7 @@ class Operator(ABC):
         """
 
     # @abstractmethod
-    # def apply(self, data: JSON) -> Any:
+    # def evaluate(self, context: EvaluationContext) -> Any:
     #     """Evaluate the operator with the provided data."""
 
     def typecheck(self, context: TypecheckContext) -> JSONSchemaType:

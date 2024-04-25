@@ -5,7 +5,7 @@ from typing import Any, Callable, NoReturn
 
 import pytest
 
-from jsonlogic.json_schema import as_json_schema, from_json_schema, from_value
+from jsonlogic.json_schema import as_json_schema, cast_from_schema, from_json_schema, from_value
 from jsonlogic.json_schema.types import (
     AnyType,
     ArrayType,
@@ -19,7 +19,7 @@ from jsonlogic.json_schema.types import (
     TupleType,
     UnionType,
 )
-from jsonlogic.typing import JSONLogicPrimitive
+from jsonlogic.typing import JSON, JSONLogicPrimitive
 
 
 def _raises(value: Any) -> NoReturn:
@@ -40,7 +40,10 @@ class _Unknown:
         ("a", {}, StringType()),
         ("2024-01-01", {_raises: AnyType, date.fromisoformat: DateType}, DateType()),
         ("2024-01-01", {}, StringType()),
-        (_Unknown(), {}, AnyType()),
+        ([], {}, ArrayType(AnyType())),
+        ([True], {}, ArrayType(BooleanType())),
+        ([True, "2024-01-01"], {date.fromisoformat: DateType}, ArrayType(UnionType(BooleanType(), DateType()))),
+        pytest.param(_Unknown(), {}, AnyType(), marks=pytest.mark.xfail(reason="No fallback currently impl.")),
     ],
 )
 def test_from_value(
@@ -65,6 +68,16 @@ json_schema_params = [
         {"type": "array", "prefixItems": [{"type": "boolean"}, {"type": "null"}], "minItems": 2, "maxItems": 2},
         {},
         TupleType((BooleanType(), NullType())),
+    ),
+    (
+        {
+            "type": "array",
+            "prefixItems": [{"type": "array", "items": {"type": "boolean"}}],
+            "minItems": 1,
+            "maxItems": 1,
+        },
+        {},
+        TupleType((ArrayType(BooleanType()),)),
     ),
 ]
 """Pytest params to use for both `from_json_schema` and `as_json_schema`.
@@ -101,3 +114,37 @@ def test_as_json_schema(
 
     with pytest.raises(RuntimeError):
         as_json_schema(DateType(), {})
+
+
+@pytest.mark.parametrize(
+    ["value", "json_schema", "variable_casts", "expected"],
+    [
+        (None, {}, {}, None),
+        (True, {}, {}, True),
+        (1, {}, {}, 1),
+        ("test", {"type": "string"}, {}, "test"),
+        ("test", {"type": "string", "format": "testfmt"}, {}, "test"),
+        ("test", {"type": "string", "format": "testfmt"}, {"testfmt": lambda s: s + "test"}, "testtest"),
+        (["test"], {"type": "array", "items": {"type": "string"}}, {}, ["test"]),
+        (["test"], {"type": "array", "items": {"type": "string", "format": "testfmt"}}, {}, ["test"]),
+        (
+            ["test"],
+            {"type": "array", "items": {"type": "string", "format": "testfmt"}},
+            {"testfmt": lambda s: s + "test"},
+            ["testtest"],
+        ),
+        (
+            ["t", "t"],
+            {
+                "type": "array",
+                "prefixItems": [{"type": "string", "format": "fmt1"}, {"type": "string", "format": "fmt2"}],
+            },
+            {"fmt1": lambda s: f"{s}1", "fmt2": lambda s: f"{s}2"},
+            ["t1", "t2"],
+        ),
+    ],
+)
+def test_cast_from_schema(
+    value: JSON, json_schema: dict[str, Any], variable_casts: dict[str, Callable[[str], Any]], expected: Any
+) -> None:
+    assert cast_from_schema(value, json_schema, variable_casts) == expected

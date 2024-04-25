@@ -6,7 +6,7 @@ To avoid any runtime type errors when evaluating a JSON Logic expression,
 specification.
 
 This typechecking implementation is configurable to some extent, and was built
-with editor integration in mind. Typechecking an operator will result in a list
+with editor integration in mind. Typechecking an operator tree will result in a list
 of :class:`~jsonlogic.typechecking.Diagnostic`, emitted by the operators of the tree.
 
 To typecheck an operator tree, the utility :func:`~jsonlogic.typechecking.typecheck` function
@@ -52,9 +52,8 @@ Representing types
 ------------------
 
 The :mod:`jsonlogic.json_schema.types` module defines a fixed representation of the possible
-JSON Schema types. Because the `JSON Schema`_ specification builds on top of JSON, the
-JSON types are represented (e.g. :class:`~jsonlogic.json_schema.types.BooleanType`), but
-the module extends on the different `formats <https://json-schema.org/understanding-json-schema/reference/string#format>`_
+JSON Schema types. The primitive types are represented (e.g. :class:`~jsonlogic.json_schema.types.BooleanType`),
+but the module extends on the different `formats <https://json-schema.org/understanding-json-schema/reference/string#format>`_
 to allow operators to work with specific formats (e.g. ``"date"`` and ``"date-time"``).
 
 Compound types
@@ -165,14 +164,14 @@ With this configuration, whenever a string literal will be encountered during ty
 every function defined in ``"literal_casts"`` will be called, until one of them doesn't raise
 any exception (generally a :exc:`ValueError`).
 
-The default value for :attr:`~jsonlogic.typechecking.TypecheckSettings.literal_casts` is the one
-given in the example.
+The default value for :attr:`~jsonlogic.typechecking.TypecheckSettings.literal_casts` is an empty
+:class:`dict`, meaning no literal cast will be attempted.
 
 .. warning::
 
     Using this feature might lead to unwanted behavior, especially if the intent
-    was to have the ISO formatted date as a string. If this causes too much issues,
-    the default value might be set to not cast any literal.
+    was to have the ISO formatted date treated as a string. For this reason, no
+    default value is provided for this setting.
 
 Inference for JSON Schema data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -194,7 +193,21 @@ The :attr:`~jsonlogic.typechecking.TypecheckSettings.variable_casts` controls th
     )
 
 Whenever a JSON Schema attribute with a format present in ``"variable_casts"`` is encountered,
-the matching JSON Schema type will be returned (assuming it is of type ``"string"``).
+the matching JSON Schema type will be returned (assuming this attribute is of type ``"string"``).
+
+.. note::
+
+    :attr:`~jsonlogic.typechecking.TypecheckSettings.literal_casts` is only relevant when
+    encountering a literal value in a JSON Logic expression. For instance, when evaluating
+    :json:`{">" ["2021-01-01", "2020-01-01"]}` with :attr:`~jsonlogic.typechecking.TypecheckSettings.literal_casts`
+    set to :python:`{date.fromisoformat: DateType}`, the expression will successfully typecheck
+    (and evaluate to :data:`True`).
+
+    :attr:`~jsonlogic.typechecking.TypecheckSettings.variable_casts`, on the other hand, is only
+    used when accessing data. For instance, when evaluating :json:`{"var": "/date_var"}` and
+    ``date_var`` is described by the JSON Schema :json:`{"type": "string", "format": "date"}`,
+    using :python:`{"date": DateType}` for :attr:`~jsonlogic.typechecking.TypecheckSettings.variable_casts`
+    will typecheck to :python:`DateType`.
 
 .. _diagnostics:
 
@@ -206,8 +219,8 @@ A diagnostic is defined by four values:
 - A :attr:`~jsonlogic.typechecking.Diagnostic.message`: a description of the diagnostic.
 - A :attr:`~jsonlogic.typechecking.Diagnostic.category`, e.g. ``"argument_type"``
   when the provided argument(s) type(s) does not match what is expected.
-- A :attr:`~jsonlogic.typechecking.Diagnostic.type`: whether the diagnostic is an
-  ``"error"``, ``"warning"`` or ``"information"``.
+- A :attr:`~jsonlogic.typechecking.Diagnostic.type`: the type of the diagnostic (i.e.
+  ``"error"``, ``"warning"`` or ``"information"``).
 - An :attr:`~jsonlogic.typechecking.Diagnostic.operator`: which operator emitted
   this diagnostic.
 
