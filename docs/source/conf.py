@@ -30,6 +30,10 @@ rst_prolog = """
 .. role:: python(code)
     :language: python
     :class: highlight
+
+.. role:: json(code)
+    :language: json
+    :class: highlight
 """
 
 templates_path = ["_templates"]

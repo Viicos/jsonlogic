@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from jsonlogic.core import Operator
+from jsonlogic.resolving import resolve_json_schema
 from jsonlogic.utils import DataStack
 
 from .diagnostics import Diagnostic, DiagnosticCategory, DiagnosticType
@@ -39,13 +40,17 @@ class TypecheckContext:
     def __init__(self, root_data_schema: dict[str, Any], settings: TypecheckSettingsDict | None = None) -> None:
         self.data_stack = DataStack(root_data_schema)
         self.settings = TypecheckSettings.from_dict(settings) if settings is not None else TypecheckSettings()
-        self.json_schema_resolver = self.settings.variable_resolver(self.data_stack)
         self.diagnostics: list[Diagnostic] = []
 
     @property
     def current_schema(self) -> dict[str, Any]:
         """The data JSON Schema in the current evaluation scope."""
         return self.data_stack.tail
+
+    def resolve_variable(self, reference: str) -> dict[str, Any]:
+        parsed_reference, scope = self.settings.reference_parser(reference)
+        schema = self.data_stack.get(scope)
+        return resolve_json_schema(parsed_reference, schema)
 
     def add_diagnostic(
         self, message: str, category: DiagnosticCategory, operator: Operator, type: DiagnosticType | None = None

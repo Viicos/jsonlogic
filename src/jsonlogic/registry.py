@@ -121,9 +121,9 @@ class OperatorRegistry:
         """Create a new instance of the registry.
 
         Args:
-            - extend: A registry or a mapping to use to register new operators
+            extend: A registry or a mapping to use to register new operators
                 while doing the copy.
-            - force: Whether to override any existing operator under the provided ID.
+            force: Whether to override any existing operator under the provided ID.
 
         Returns:
             A new instance of the registry.
