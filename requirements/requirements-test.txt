@@ -18,6 +18,8 @@ filelock==3.13.1
     #   virtualenv
 iniconfig==2.0.0
     # via pytest
+nodeenv==1.8.0
+    # via pyright
 packaging==24.0
     # via
     #   pyproject-api
@@ -33,6 +35,8 @@ pluggy==1.4.0
     #   tox
 pyproject-api==1.6.1
     # via tox
+pyright==1.1.360
+    # via -r requirements/requirements-test.in
 pytest==8.1.1
     # via -r requirements/requirements-test.in
 tomli==2.0.1
@@ -45,3 +49,6 @@ tox-gh-actions==3.2.0
     # via -r requirements/requirements-test.in
 virtualenv==20.25.1
     # via tox
+
+# The following packages are considered to be unsafe in a requirements file:
+# setuptools

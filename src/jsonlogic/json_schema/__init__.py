@@ -19,6 +19,8 @@ from .types import (
 )
 
 __all__ = (
+    "as_json_schema",
+    "cast_from_schema",
     "from_json_schema",
     "from_value",
 )

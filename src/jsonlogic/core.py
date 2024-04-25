@@ -81,7 +81,7 @@ class JSONLogicExpression:
     expression: JSONLogicPrimitive | NormalizedExpression
 
     @classmethod
-    def from_json(cls, json: JSON) -> Self:  # TODO disallow list?
+    def from_json(cls, json: JSON) -> Self:  # TODO disallow list? TODO fix type errors
         """Build a JSON Logic expression from JSON data.
 
         Operator arguments are recursively normalized to a :class:`list`::
@@ -90,7 +90,7 @@ class JSONLogicExpression:
             assert expr.expression == {"var": ["varname"]}
         """
         if not isinstance(json, dict):
-            return cls(expression=json)
+            return cls(expression=json)  # type: ignore
 
         operator, op_args = next(iter(json.items()))
         if not isinstance(op_args, list):
@@ -98,7 +98,7 @@ class JSONLogicExpression:
 
         sub_expressions = [cls.from_json(op_arg) for op_arg in op_args]
 
-        return cls({operator: sub_expressions})
+        return cls({operator: sub_expressions})  # type: ignore
 
     def as_operator_tree(self, operator_registry: OperatorRegistry) -> JSONLogicPrimitive | Operator:
         """Return a recursive tree of operators, using the provided registry as a reference.
