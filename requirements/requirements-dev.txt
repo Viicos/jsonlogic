@@ -4,5 +4,12 @@
 #
 #    pip-compile requirements/requirements-dev.in
 #
+nodeenv==1.8.0
+    # via pyright
+pyright==1.1.360
+    # via -r requirements/requirements-dev.in
 ruff==0.3.2
     # via -r requirements/requirements-dev.in
+
+# The following packages are considered to be unsafe in a requirements file:
+# setuptools

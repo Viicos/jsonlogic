@@ -1,4 +1,5 @@
 -c requirements.txt
+pyright
 pytest
 tomli
 tox
