@@ -90,7 +90,7 @@ class DotReferenceParser(BaseReferenceParser):
     def __call__(self, reference: str) -> tuple[ParsedReference, int]:
         reference, scope = self.parse_scope(reference)
 
-        return ParsedReference(reference, reference.split(".")), scope
+        return ParsedReference(reference, [] if reference == "" else reference.split(".")), scope
 
 
 class PointerReferenceParser(BaseReferenceParser):
@@ -98,10 +98,13 @@ class PointerReferenceParser(BaseReferenceParser):
 
     def __call__(self, reference: str) -> tuple[ParsedReference, int]:
         reference, scope = self.parse_scope(reference)
-        segments = [
-            segment.replace("~2", "@").replace("~1", "/").replace("~0", "~")
-            for segment in unquote(reference[1:]).split("/")
-        ]
+        if reference == "":
+            segments = []
+        else:
+            segments = [
+                segment.replace("~2", "@").replace("~1", "/").replace("~0", "~")
+                for segment in unquote(reference[1:]).split("/")
+            ]
 
         return ParsedReference(reference, segments), scope
 

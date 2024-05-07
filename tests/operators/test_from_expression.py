@@ -46,6 +46,9 @@ def test_if() -> None:
     assert if_.if_elses == [(1, 2), (3, 4)]
     assert if_.leading_else == 5
 
+    with pytest.raises(JSONLogicSyntaxError, match="'if' expects at least 3 arguments, got 1"):
+        If.from_expression("if", [1])
+
     with pytest.raises(JSONLogicSyntaxError, match="'if' expects an odd number of arguments, got 6"):
         If.from_expression("if", [1, 2, 3, 4, 5, 6])
 

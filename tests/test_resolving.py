@@ -22,6 +22,11 @@ pointer_ref_parser = PointerReferenceParser()
     ["pointer_reference", "dot_reference", "expected"],
     [
         (
+            "",
+            "",
+            ([], 0),
+        ),
+        (
             "/a",
             "a",
             (["a"], 0),
@@ -46,15 +51,31 @@ pointer_ref_parser = PointerReferenceParser()
 )
 def test_reference_parser(pointer_reference: str, dot_reference: str, expected: tuple[list[str], int]) -> None:
     parsed_ref, scope = pointer_ref_parser(pointer_reference)
-    assert parsed_ref.segments, scope == expected
+    assert (parsed_ref.segments, scope) == expected
 
-    parsed_ref, scope = dot_ref_parser(pointer_reference)
-    assert parsed_ref.segments, scope == expected
+    parsed_ref, scope = dot_ref_parser(dot_reference)
+    assert (parsed_ref.segments, scope) == expected
+
+
+def test_pointer_reference_empty_string() -> None:
+    """Pointer references are unambiguous, thus we can parse `"/"` as being `[""]`.
+
+    Note that this is not possible with dot references, so this is tested separately.
+    (`""` is special cased to be the root document, and `"."` has to be parsed to `["", ""]`).
+    """
+
+    parsed_ref, scope = pointer_ref_parser("/")
+    assert (parsed_ref.segments, scope) == ([""], 0)
 
 
 @pytest.mark.parametrize(
     ["schema", "segments", "expected"],
     [
+        (
+            {"type": "string"},
+            [],
+            {"type": "string"},
+        ),
         (
             {"type": "object", "properties": {"a": {"type": "string"}}},
             ["a"],
@@ -102,6 +123,7 @@ def test_resolve_json_schema_unresolvable(schema: dict[str, Any], segments: list
 @pytest.mark.parametrize(
     ["data", "segments", "expected"],
     [
+        ({"a": "test"}, [], {"a": "test"}),
         ({"a": "test"}, ["a"], "test"),
         (["test0", "test1"], ["1"], "test1"),
         ({"a": ["test0"]}, ["a", "0"], "test0"),
