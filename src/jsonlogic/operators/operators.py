@@ -9,7 +9,15 @@ from jsonlogic._compat import Self
 from jsonlogic.core import JSONLogicSyntaxError, Operator
 from jsonlogic.evaluation import EvaluationContext
 from jsonlogic.json_schema import as_json_schema, from_json_schema
-from jsonlogic.json_schema.types import AnyType, ArrayType, BinaryOp, BooleanType, JSONSchemaType, UnsupportedOperation
+from jsonlogic.json_schema.types import (
+    AnyType,
+    ArrayType,
+    BinaryOp,
+    BooleanType,
+    JSONSchemaType,
+    StringType,
+    UnsupportedOperation,
+)
 from jsonlogic.resolving import Unresolvable
 from jsonlogic.typing import OperatorArgument
 from jsonlogic.utils import UNSET, UnsetType
@@ -37,7 +45,11 @@ class Var(Operator):
 
     def typecheck(self, context: TypecheckContext) -> JSONSchemaType:
         if isinstance(self.variable_path, Operator):
-            self.variable_path.typecheck(context)
+            var_type = self.variable_path.typecheck(context)
+            if not isinstance(var_type, StringType):
+                context.add_diagnostic(
+                    f"The first argument must be of type string, got {var_type.name}", "argument_type", self
+                )
             return AnyType()
 
         default_value_type: JSONSchemaType | None
@@ -51,7 +63,7 @@ class Var(Operator):
         except Unresolvable:
             if default_value_type is None:
                 context.add_diagnostic(
-                    f"{self.variable_path} is unresolvable and no fallback value is provided",
+                    f"{self.variable_path!r} is unresolvable and no fallback value is provided",
                     "unresolvable_variable",
                     self,
                 )
@@ -59,7 +71,7 @@ class Var(Operator):
 
             # We emit a diagnostic but as a warning, as this will not fail at runtime
             context.add_diagnostic(
-                f"{self.variable_path} is unresolvable", "unresolvable_variable", self, type="warning"
+                f"{self.variable_path!r} is unresolvable", "unresolvable_variable", self, type="warning"
             )
             return default_value_type
         else:
@@ -114,6 +126,8 @@ class If(Operator):
 
     @classmethod
     def from_expression(cls, operator: str, arguments: list[OperatorArgument]) -> Self:
+        if len(arguments) <= 2:
+            raise JSONLogicSyntaxError(f"{operator!r} expects at least 3 arguments, got {len(arguments)}")
         if len(arguments) % 2 == 0:
             raise JSONLogicSyntaxError(f"{operator!r} expects an odd number of arguments, got {len(arguments)}")
         return cls(operator=operator, if_elses=list(zip(arguments[::2], arguments[1::2])), leading_else=arguments[-1])
@@ -121,8 +135,12 @@ class If(Operator):
     def typecheck(self, context: TypecheckContext) -> JSONSchemaType:
         for i, (cond, _) in enumerate(self.if_elses, start=1):
             cond_type = get_type(cond, context)
-            if not isinstance(cond_type, BooleanType):
-                context.add_diagnostic(f"Condition {i} should be a boolean", "argument_type", self)
+            try:
+                # TODO It might be that unary_op("bool") does not return
+                # `BooleanType`, altough it wouldn't make much sense
+                cond_type.unary_op("bool")
+            except UnsupportedOperation:
+                context.add_diagnostic(f"Condition {i} should support boolean evaluation", "argument_type", self)
 
         return functools.reduce(operator.or_, (get_type(rv, context) for _, rv in self.if_elses)) | get_type(
             self.leading_else, context
@@ -213,7 +231,7 @@ class Plus(Operator):
 
     @classmethod
     def from_expression(cls, operator: str, arguments: list[OperatorArgument]) -> Self:
-        # Having a unary + is a bit useless, but we might not error here in the future
+        # TODO Having a unary + is a bit useless, but we might not error here in the future
         if not len(arguments) >= 2:
             raise JSONLogicSyntaxError(f"{operator!r} expects at least two arguments, got {len(arguments)}")
         return cls(operator=operator, arguments=arguments)
@@ -287,7 +305,7 @@ class Map(Operator):
 
     @classmethod
     def from_expression(cls, operator: str, arguments: list[OperatorArgument]) -> Self:
-        if len(arguments) not in {1, 2}:
+        if len(arguments) != 2:
             raise JSONLogicSyntaxError(f"{operator!r} expects two arguments, got {len(arguments)}")
 
         return cls(operator=operator, vars=arguments[0], func=arguments[1])
@@ -295,7 +313,9 @@ class Map(Operator):
     def typecheck(self, context: TypecheckContext) -> JSONSchemaType:
         vars_type = get_type(self.vars, context)
         if not isinstance(vars_type, ArrayType):
-            context.add_diagnostic(f"The first argument must be of type array, got {vars_type}", "argument_type", self)
+            context.add_diagnostic(
+                f"The first argument must be of type array, got {vars_type.name}", "argument_type", self
+            )
             return AnyType()
 
         vars_type = cast(ArrayType[JSONSchemaType], vars_type)

@@ -26,8 +26,9 @@ DataT = TypeVar("DataT")
 
 class DataStack(Generic[DataT]):
     def __init__(self, root_data: DataT | UnsetType = UNSET) -> None:
+        self._stack = []
         if root_data is not UNSET:
-            self._stack = [root_data]
+            self._stack.append(root_data)
 
     @property
     def tail(self) -> DataT:
