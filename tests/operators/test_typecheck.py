@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date
 from typing import Any, cast
+
+import pytest
 
 from jsonlogic._compat import Self
 from jsonlogic.core import JSONLogicExpression, Operator
+from jsonlogic.evaluation import EvaluationContext
 from jsonlogic.json_schema.types import (
     AnyType,
     ArrayType,
@@ -37,6 +41,9 @@ class ReturnsOp(Operator):
 
     def typecheck(self, context: TypecheckContext) -> JSONSchemaType:
         return self.return_type
+
+    def evaluate(self, context: EvaluationContext) -> None:
+        return None
 
 
 operator_registry = base_operator_registry.copy(extend={"returns": ReturnsOp})
@@ -223,6 +230,19 @@ def test_map() -> None:
 
     assert rt == ArrayType(NumberType())
     assert diagnostics == []
+
+
+@pytest.mark.xfail(reason="Arrays are currently considered as JSON Logic primitives.")
+def test_map_op_in_values():
+    op = as_op({"map": [["2000-01-01", {"var": "/my_date"}], {">": [{"var": ""}, "1970-01-01"]}]})
+
+    rt, _ = typecheck(
+        op,
+        data_schema={"type": "object", "properties": {"my_date": {"type": "string", "format": "date"}}},
+        settings={"literal_casts": {date.fromisoformat: DateType}},
+    )
+
+    assert rt == ArrayType(BooleanType())
 
 
 def test_map_root_reference() -> None:

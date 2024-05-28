@@ -21,11 +21,11 @@ class TypecheckContext:
         >>> expr = ...
         >>> root_op = expr.as_operator_tree(operator_registry)
         >>> context = TypecheckContext(
-        >>>     root_data_schema={"type": "object", "properties": ...},
-        >>>     settings={
-        >>>         "diagnostics": {"argument_type": "warning"},
-        >>>     },
-        >>> )
+        ...     root_data_schema={"type": "object", "properties": ...},
+        ...     settings={
+        ...         "diagnostics": {"argument_type": "warning"},
+        ...     },
+        ... )
         >>> root_op.typecheck(context)
         >>> context.diagnostics
         [Diagnostic(message="...", ...)]

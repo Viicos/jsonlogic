@@ -21,14 +21,14 @@ class EvaluationContext:
         >>> expr = JSONLogicExpression.from_json({"var": "/a_date"})
         >>> root_op = expr.as_operator_tree(operator_registry)
         >>> context = EvaluationContext(
-        >>>     data={"a_date": "1970-01-01"},
-        >>>     data_schema={
-        >>>         "type": "object",
-        >>>         "properties": {
-        >>>             "a_date": {"type": "string", "format": "date"},
-        >>>         },
-        >>>     },
-        >>> )
+        ...     data={"a_date": "1970-01-01"},
+        ...     data_schema={
+        ...         "type": "object",
+        ...         "properties": {
+        ...             "a_date": {"type": "string", "format": "date"},
+        ...         },
+        ...     },
+        ... )
         >>> root_op.evaluate(context)
         datetime.date(1970, 1, 1)
 

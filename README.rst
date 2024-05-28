@@ -16,7 +16,9 @@ python-jsonlogic
   :alt: PyPI - Version
   :target: https://github.com/astral-sh/ruff
 
-``python-jsonlogic`` is an extensible and sane implementation of `JsonLogic`_.
+``python-jsonlogic`` is an extensible and sane implementation of `JsonLogic`_, making use of the `JSON Schema`_ specification.
+
+.. _`JSON Schema`: https://json-schema.org/
 
 Motivation
 ----------
@@ -80,6 +82,12 @@ Usage
     print(typ)
     #> BooleanType()
 
-    # 5. Apply with some data:
-    root_op.apply({"my_int": 3})
+    # 5. Evamiate with data:
+    from jsonlogic.evaluation import evaluate
+    value = evaluate(
+        root_op,
+        data={"my_int": 3},
+        data_schema=None,
+    )
+    print(value)
     #> True

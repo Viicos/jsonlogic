@@ -1,9 +1,8 @@
 Creating operators
 ==================
 
-Every operator should be defined as an implementation of the
-:class:`~jsonlogic.core.Operator` abstract base class. In this example,
-we will implement the ``>`` operator.
+Every operator should be defined as a subclass of the :class:`~jsonlogic.core.Operator`
+abstract base class. In this example, we will implement the ``>`` operator.
 
 As the base class is defined as a :func:`~dataclasses.dataclass`,
 we will follow that path for our operator.
@@ -64,7 +63,7 @@ This method is responsible for
 
     from jsonlogic.typechecking import TypecheckContext
     from jsonlogic.json_schema import from_value
-    from jsonlogic.json_schema.types import BooleanType
+    from jsonlogic.json_schema.types import BooleanType, UnsupportedOperation
 
     class GreaterThan(Operator):
         ...
@@ -87,26 +86,55 @@ This method is responsible for
             left_type = get_type(self.left, context)
             right_type = get_type(self.right, context)
 
-            if not left_type.comparable_with(right_type):
+            try:
+                return left_type.binary_op(right_type, ">")
+            except UnsupportedOperation:
                 context.add_diagnostic(
                     f"Cannot compare {left_type.name} with {right_type.name}",
                     "not_comparable",
                     self
                 )
-            return BooleanType()
 
   The :class:`~jsonlogic.typechecking.TypecheckContext` object is used to emit diagnostics
   and access the JSON Schema of the data provided when using :func:`~jsonlogic.typechecking.typecheck`.
 
-Implementing the :meth:`~jsonlogic.core.Operator.apply` method
---------------------------------------------------------------
+  Every JSON Schema type class defines two methods:
+  :meth:`~jsonlogic.json_schema.types.JSONSchemaType.unary_op` and :meth:`~jsonlogic.json_schema.types.JSONSchemaType.binary_op`.
+  The ``op`` argument is a string literal representing the Python operator, e.g. ``">"`` or ``%``.
 
-The :meth:`~jsonlogic.core.Operator.apply` method is used to evaluate the
+Implementing the :meth:`~jsonlogic.core.Operator.evaluate` method
+-----------------------------------------------------------------
+
+The :meth:`~jsonlogic.core.Operator.evaluate` method is used to evaluate the
 operator.
 
-.. todo::
+Similar to the :meth:`~jsonlogic.core.Operator.typecheck` method, it is responsible for:
 
-    Will need to be defined with a data stack.
+- evaluating the children::
+
+    from jsonlogic.evaluation import EvaluationContext, get_value
+
+    class GreaterThan(Operator):
+        ...
+
+        def evaluate(self, context: EvaluationContext) -> bool:
+            left_value = get_value(self.left, context)
+            right_value = get_value(self.right, context)
+
+  :func:`~jsonlogic.evaluation.get_value` is a utility function to evaluate
+  the argument if it is an :class:`~jsonlogic.core.Operator`, or return the
+  primitive value.
+
+- evaluating the current operator::
+
+    class GreaterThan(Operator):
+        ...
+
+        def evaluate(self, context: EvaluationContext) -> bool:
+            left_value = get_value(self.left, context)
+            right_value = get_value(self.right, context)
+
+            return left_value > right_value
 
 
 .. rubric:: Footnotes

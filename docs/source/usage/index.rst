@@ -53,7 +53,7 @@ tree from the constructed expression:
     assert registry.get("var") is Var
 
 This allows using any operator set you'd like when evaluating an expression. ``python-jsonlogic``
-provides a default set of operators, but it purposely differs from the available operators
+provides a default set of operators, but it *purposely differs* from the available operators
 on the `JsonLogic`_ website. In the future, a matching implementation of these operators might
 be provided to ease transition from the already existing implementations.
 
@@ -76,7 +76,7 @@ receives two arguments:
 
 Note that because this method is defined recursively, the retun type annotation is the union
 of :class:`~jsonlogic.core.Operator` and :data:`~jsonlogic.typing.JSONLogicPrimitive`. Using
-an :keyword:`assert` statement might help.
+an :keyword:`assert` statement or :func:`~typing.cast` call might help your type checker.
 
 .. warning::
 
@@ -92,6 +92,7 @@ The next sections will go over typechecking and evaluating the expression.
     :maxdepth: 2
 
     typechecking
+    evaluation
     creating_operators
 
 .. _`JsonLogic`: https://jsonlogic.com/
