@@ -34,13 +34,13 @@ can be used:
         },
         settings={  # Optional
             "diagnostics": {"argument_type": "warning"},
-        }
+        },
     )
     assert root_type == BooleanType()
 
 This function returns a two-tuple, containing:
 
-- The type returned by the operator (see :ref:`representing types`).
+- The inferred type of the operator (see :ref:`representing types`).
 - The list of emitted diagnostics.
 
 For more information on the structure of diagnostics and the related configuration,
@@ -53,8 +53,8 @@ Representing types
 
 The :mod:`jsonlogic.json_schema.types` module defines a fixed representation of the possible
 JSON Schema types. The primitive types are represented (e.g. :class:`~jsonlogic.json_schema.types.BooleanType`),
-but the module extends on the different `formats <https://json-schema.org/understanding-json-schema/reference/string#format>`_
-to allow operators to work with specific formats (e.g. ``"date"`` and ``"date-time"``).
+but the module supports `formats <https://json-schema.org/understanding-json-schema/reference/string#format>`_
+to allow operators to work with specific other types (e.g. ``"date"`` and ``"date-time"``).
 
 Compound types
 ^^^^^^^^^^^^^^
@@ -91,7 +91,7 @@ Converting types from a ``"format"`` specifier
 ----------------------------------------------
 
 The need for a ``"format"`` specifier in the `JSON Schema`_ specification comes
-from the lack of these types in the JSON format.
+from the lack of these types in the JSON data language.
 
 When evaluating a JSON Logic expression, it might be beneficial to allow specific
 operations on some formats:
@@ -199,7 +199,7 @@ the matching JSON Schema type will be returned (assuming this attribute is of ty
 
     :attr:`~jsonlogic.typechecking.TypecheckSettings.literal_casts` is only relevant when
     encountering a literal value in a JSON Logic expression. For instance, when evaluating
-    :json:`{">" ["2021-01-01", "2020-01-01"]}` with :attr:`~jsonlogic.typechecking.TypecheckSettings.literal_casts`
+    :json:`{">" ["2024-01-01", "2020-01-01"]}` with :attr:`~jsonlogic.typechecking.TypecheckSettings.literal_casts`
     set to :python:`{date.fromisoformat: DateType}`, the expression will successfully typecheck
     (and evaluate to :data:`True`).
 

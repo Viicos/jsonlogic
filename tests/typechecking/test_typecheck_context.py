@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from jsonlogic._compat import Self
 from jsonlogic.core import Operator
+from jsonlogic.evaluation.evaluation_context import EvaluationContext
 from jsonlogic.typechecking import Diagnostic, TypecheckContext
 from jsonlogic.typing import OperatorArgument
 
@@ -10,6 +11,9 @@ class DummyOp(Operator):
     @classmethod
     def from_expression(cls, operator: str, arguments: list[OperatorArgument]) -> Self:
         return cls(operator)
+
+    def evaluate(self, context: EvaluationContext) -> None:
+        return None
 
 
 def test_typecheck_context():

@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from ._compat import Self, TypeAlias
 from .json_schema.types import AnyType, JSONSchemaType
@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     # This is a hack to make Pylance think `TypeAlias` comes from `typing`
     from typing import TypeAlias
 
+    from .evaluation import EvaluationContext
     from .registry import OperatorRegistry
     from .typechecking import TypecheckContext
 
@@ -44,9 +45,9 @@ class Operator(ABC):
                 for checking the correct number of arguments and optionally the types.
         """
 
-    # @abstractmethod
-    # def evaluate(self, context: EvaluationContext) -> Any:
-    #     """Evaluate the operator with the provided data."""
+    @abstractmethod
+    def evaluate(self, context: EvaluationContext) -> Any:
+        """Evaluate the operator with the provided data."""
 
     def typecheck(self, context: TypecheckContext) -> JSONSchemaType:
         """Typecheck the operator (and all children) given the data schema."""

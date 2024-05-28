@@ -7,7 +7,7 @@ from typing import Any, Callable, ClassVar, cast
 
 from jsonlogic._compat import Self
 from jsonlogic.core import JSONLogicSyntaxError, Operator
-from jsonlogic.evaluation import EvaluationContext
+from jsonlogic.evaluation import EvaluationContext, get_value
 from jsonlogic.json_schema import as_json_schema, from_json_schema
 from jsonlogic.json_schema.types import (
     AnyType,
@@ -19,10 +19,9 @@ from jsonlogic.json_schema.types import (
     UnsupportedOperation,
 )
 from jsonlogic.resolving import Unresolvable
+from jsonlogic.typechecking import TypecheckContext, get_type
 from jsonlogic.typing import OperatorArgument
 from jsonlogic.utils import UNSET, UnsetType
-
-from ..typechecking import TypecheckContext, get_type
 
 
 @dataclass
@@ -81,10 +80,13 @@ class Var(Operator):
             return js_type
 
     def evaluate(self, context: EvaluationContext) -> Any:
-        pass
-        # str_path = (
-        #     self.variable_path.evaluate(context) if isinstance(self.variable_path, Operator) else self.variable_path
-        # )
+        str_path = get_value(self.variable_path, context)
+        try:
+            return context.resolve_variable(str_path)
+        except Exception:  # TODO have a proper exception raised by `resolve_variable`
+            if self.default_value is UNSET:
+                raise
+            return get_value(self.default_value, context)
 
 
 @dataclass
@@ -107,6 +109,12 @@ class EqualityOperator(Operator):
         if isinstance(self.right, Operator):
             self.right.typecheck(context)
         return BooleanType()
+
+    def evaluate(self, context: EvaluationContext) -> bool:
+        left = get_value(self.left, context)
+        right = get_value(self.right, context)
+
+        return self.equality_func(left, right)
 
 
 @dataclass
@@ -146,6 +154,13 @@ class If(Operator):
             self.leading_else, context
         )
 
+    def evaluate(self, context: EvaluationContext) -> Any:
+        for cond, rv in self.if_elses:
+            if get_value(cond, context):
+                return get_value(rv, context)
+
+        return get_value(self.leading_else, context)
+
 
 @dataclass
 class BinaryOperator(Operator):
@@ -178,15 +193,10 @@ class BinaryOperator(Operator):
         return AnyType()
 
     def evaluate(self, context: EvaluationContext) -> bool:
-        return True
-        # left = self.left
-        # if isinstance(left, Operator):
-        #     left = left.evaluate(context)
-        # right = self.right
-        # if isinstance(right, Operator):
-        #     right = right.evaluate(context)
+        left = get_value(self.left, context)
+        right = get_value(self.right, context)
 
-        # return self.operator_func(left, right)
+        return self.operator_func(left, right)
 
 
 @dataclass
@@ -257,6 +267,9 @@ class Plus(Operator):
 
         return result_type
 
+    def evaluate(self, context: EvaluationContext) -> Any:
+        return functools.reduce(lambda a, b: get_value(a, context) + get_value(b, context), self.arguments)
+
 
 @dataclass
 class Minus(Operator):
@@ -297,6 +310,14 @@ class Minus(Operator):
             )
             return AnyType()
 
+    def evaluate(self, context: EvaluationContext) -> Any:
+        left_value = get_value(self.left, context)
+        if self.right is UNSET:
+            return -left_value
+
+        right_value = get_value(self.right, context)
+        return left_value - right_value
+
 
 @dataclass
 class Map(Operator):
@@ -323,3 +344,16 @@ class Map(Operator):
             func_type = get_type(self.func, context)
 
         return ArrayType(func_type)
+
+    def evaluate(self, context: EvaluationContext) -> list[Any]:
+        vars_value = get_value(self.vars, context)
+
+        # `vars_value` is already evaluated, and any required literal/variable cast is done.
+        # Thus no data schema is passed to the data stack, and `EvaluationContext.resolve_variable`
+        # will assume the bare value should be returned.
+        return_array: list[Any] = []
+        for var in vars_value:
+            with context.data_stack.push((var, None)):
+                return_array.append(get_value(self.func, context))
+
+        return return_array
