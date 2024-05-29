@@ -57,15 +57,22 @@ def test_reference_parser(pointer_reference: str, dot_reference: str, expected: 
     assert (parsed_ref.segments, scope) == expected
 
 
-def test_pointer_reference_empty_string() -> None:
+@pytest.mark.parametrize(
+    ["pointer_reference", "expected"],
+    [
+        ("/", ([""], 0)),
+        ("//", (["", ""], 0)),
+    ],
+)
+def test_pointer_reference(pointer_reference: str, expected: tuple[list[str], int]) -> None:
     """Pointer references are unambiguous, thus we can parse `"/"` as being `[""]`.
 
     Note that this is not possible with dot references, so this is tested separately.
     (`""` is special cased to be the root document, and `"."` has to be parsed to `["", ""]`).
     """
 
-    parsed_ref, scope = pointer_ref_parser("/")
-    assert (parsed_ref.segments, scope) == ([""], 0)
+    parsed_ref, scope = pointer_ref_parser(pointer_reference)
+    assert (parsed_ref.segments, scope) == expected
 
 
 @pytest.mark.parametrize(
