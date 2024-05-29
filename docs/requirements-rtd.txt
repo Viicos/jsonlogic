@@ -1,0 +1,4 @@
+# Temporary solution as multiple requirement files can't be configured in RTD.
+# See https://github.com/readthedocs/readthedocs.org/issues/1112
+-r ../requirements/requirements.txt
+-r ../requirements/requirements-docs.txt
