@@ -62,7 +62,10 @@ Usage
     # 2. Parse the JSON Logic expression:
     from jsonlogic import JSONLogicExpression
 
-    expr = JSONLogicExpression.from_json({">": [{"var": "my_int"}, 2]})
+    expr = JSONLogicExpression.from_json({"map": [
+        [1, 2],
+        {"*": [{"var": ""}, {"var": "/my_int@1"}]},
+    ]})
 
     # 3. Create an operator tree:
     root_op = expr.as_operator_tree(operator_registry)
@@ -80,14 +83,14 @@ Usage
         }
     )
     print(typ)
-    #> BooleanType()
+    #> ArrayType(IntegerType())
 
     # 5. Evaluate with data:
     from jsonlogic.evaluation import evaluate
     value = evaluate(
         root_op,
-        data={"my_int": 3},
+        data={"my_int": 2},
         data_schema=None,
     )
     print(value)
-    #> True
+    #> [2, 4]

@@ -91,6 +91,7 @@ The next sections will go over typechecking and evaluating the expression.
 .. toctree::
     :maxdepth: 2
 
+    resolving_variables
     typechecking
     evaluation
     creating_operators
