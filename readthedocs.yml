@@ -25,7 +25,4 @@ formats:
 # See https://docs.readthedocs.io/en/stable/guides/reproducible-builds.html
 python:
    install:
-   - requirements: requirements/requirements-docs.txt
-   # TODO: Would benefit from https://github.com/readthedocs/readthedocs.org/issues/1112:
-   - extra_requirements:
-       - typing-extensions==4.10.0
+   - requirements: docs/requirements-rtd.txt
