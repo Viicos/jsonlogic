@@ -82,7 +82,7 @@ Usage
     print(typ)
     #> BooleanType()
 
-    # 5. Evamiate with data:
+    # 5. Evaluate with data:
     from jsonlogic.evaluation import evaluate
     value = evaluate(
         root_op,
