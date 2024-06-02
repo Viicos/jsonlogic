@@ -4,7 +4,7 @@ from typing import Any
 
 from jsonlogic.core import Operator
 from jsonlogic.json_schema import from_value
-from jsonlogic.json_schema.types import JSONSchemaType
+from jsonlogic.json_schema.types import ArrayType, JSONSchemaType, UnionType
 from jsonlogic.typing import OperatorArgument
 
 from .diagnostics import Diagnostic
@@ -44,4 +44,6 @@ def get_type(obj: OperatorArgument, context: TypecheckContext) -> JSONSchemaType
     """
     if isinstance(obj, Operator):
         return obj.typecheck(context)
+    if isinstance(obj, list):
+        return ArrayType(UnionType(*(get_type(sub_obj, context) for sub_obj in obj)))
     return from_value(obj, context.settings.literal_casts)

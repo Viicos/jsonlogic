@@ -184,8 +184,7 @@ def test_map() -> None:
     assert rv == [3.0, 4.0]
 
 
-@pytest.mark.xfail(reason="Arrays are currently considered as JSON Logic primitives.")
-def test_map_op_in_values():
+def test_map_op_in_values() -> None:
     op = as_op({"map": [["2000-01-01", {"var": "/my_date"}], {">": [{"var": ""}, "1970-01-01"]}]})
 
     rv = evaluate(
@@ -196,6 +195,23 @@ def test_map_op_in_values():
     )
 
     assert rv == [True, False]
+
+
+def test_nested_map() -> None:
+    op = as_op(
+        {
+            "map": [
+                [[1, 2], [3, {"var": "/my_number"}]],
+                {"var": ""},
+            ],
+        }
+    )
+
+    rv = evaluate(
+        op, data={"my_number": 4}, data_schema={"type": "object", "properties": {"my_number": {"type": "integer"}}}
+    )
+
+    assert rv == [[1, 2], [3, 4]]
 
 
 def test_map_root_reference() -> None:

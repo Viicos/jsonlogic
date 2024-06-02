@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any
 
 from ._compat import Self, TypeAlias
 from .json_schema.types import AnyType, JSONSchemaType
-from .typing import JSON, JSONLogicPrimitive, OperatorArgument
+from .typing import JSON, JSONLogicPrimitive, JSONObject, OperatorArgument
 
 if TYPE_CHECKING:
     # This is a hack to make Pylance think `TypeAlias` comes from `typing`
@@ -62,27 +62,35 @@ class JSONLogicSyntaxError(Exception):
         self.message = message
 
 
-NormalizedExpression: TypeAlias = "dict[str, list[JSONLogicExpression]]"
+ExprArgument: TypeAlias = "JSONLogicPrimitive | JSONLogicExpression | list[ExprArgument]"
+
+NormalizedExpression: TypeAlias = "dict[str, list[ExprArgument]]"
 
 
 @dataclass
 class JSONLogicExpression:
     """A parsed and normalized JSON Logic expression.
 
-    A JSON Logic expression can be:
-
-    - a single item dictionary, mapping the operator key to another :class:`JSONLogicExpression`,
-    - a :data:`~jsonlogic.typing.JSONLogicPrimitive`.
+    The underlying structure of an expression is a single item dictionary,
+    mapping the operator key to a list of arguments.
 
     All JSON Logic expressions should be instantiated using the :meth:`from_json` constructor::
 
-        expr = JSONLogicExpression.from_json(...)
+        expr = JSONLogicExpression.from_json({"op": ...})
     """
 
-    expression: JSONLogicPrimitive | NormalizedExpression
+    expression: NormalizedExpression
 
     @classmethod
-    def from_json(cls, json: JSON) -> Self:  # TODO disallow list? TODO fix type errors
+    def _parse_impl(cls, json: JSON) -> ExprArgument:
+        if isinstance(json, dict):
+            return cls.from_json(json)
+        if isinstance(json, list):
+            return [cls._parse_impl(s) for s in json]
+        return json
+
+    @classmethod
+    def from_json(cls, json: JSONObject) -> Self:
         """Build a JSON Logic expression from JSON data.
 
         Operator arguments are recursively normalized to a :class:`list`::
@@ -91,25 +99,29 @@ class JSONLogicExpression:
             assert expr.expression == {"var": ["varname"]}
         """
         if not isinstance(json, dict):
-            return cls(expression=json)  # type: ignore
+            raise ValueError("The root node of the expression must be a dict")
 
         operator, op_args = next(iter(json.items()))
         if not isinstance(op_args, list):
             op_args = [op_args]
 
-        sub_expressions = [cls.from_json(op_arg) for op_arg in op_args]
+        return cls({operator: [cls._parse_impl(arg) for arg in op_args]})
 
-        return cls({operator: sub_expressions})  # type: ignore
+    def _as_op_impl(self, op_arg: ExprArgument, operator_registry: OperatorRegistry) -> OperatorArgument:
+        if isinstance(op_arg, JSONLogicExpression):
+            return op_arg.as_operator_tree(operator_registry)
+        if isinstance(op_arg, list):
+            return [self._as_op_impl(sub_arg, operator_registry) for sub_arg in op_arg]
+        return op_arg
 
-    def as_operator_tree(self, operator_registry: OperatorRegistry) -> JSONLogicPrimitive | Operator:
+    def as_operator_tree(self, operator_registry: OperatorRegistry) -> Operator:
         """Return a recursive tree of operators, using the provided registry as a reference.
 
         Args:
             operator_registry: The registry to use to resolve operator IDs.
 
         Returns:
-            The current expression if it is a :data:`~jsonlogic.typing.JSONLogicPrimitive`
-            or an :class:`Operator` instance.
+            An :class:`Operator` instance.
         """
         if not isinstance(self.expression, dict):
             return self.expression
@@ -117,4 +129,4 @@ class JSONLogicExpression:
         op_id, op_args = next(iter(self.expression.items()))
         OperatorCls = operator_registry.get(op_id)
 
-        return OperatorCls.from_expression(op_id, [op_arg.as_operator_tree(operator_registry) for op_arg in op_args])
+        return OperatorCls.from_expression(op_id, [self._as_op_impl(op_arg, operator_registry) for op_arg in op_args])

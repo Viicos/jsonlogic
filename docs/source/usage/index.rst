@@ -74,10 +74,6 @@ receives two arguments:
 - :paramref:`~jsonlogic.core.Operator.from_expression.arguments`: The list of arguments for this operator.
   This can either be another :class:`~jsonlogic.core.Operator` or a :data:`~jsonlogic.typing.JSONLogicPrimitive`.
 
-Note that because this method is defined recursively, the retun type annotation is the union
-of :class:`~jsonlogic.core.Operator` and :data:`~jsonlogic.typing.JSONLogicPrimitive`. Using
-an :keyword:`assert` statement or :func:`~typing.cast` call might help your type checker.
-
 .. warning::
 
     Each operator is responsible for checking the provided arguments. For example, the ``GreaterThan`` operator
