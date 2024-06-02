@@ -4,5 +4,5 @@
 #
 #    pip-compile requirements/requirements.in
 #
-typing-extensions==4.10.0
+typing-extensions==4.12.1
     # via -r requirements/requirements.in
