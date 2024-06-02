@@ -12,43 +12,40 @@ colorama==0.4.6
     # via tox
 distlib==0.3.8
     # via virtualenv
-filelock==3.13.1
+filelock==3.14.0
     # via
     #   tox
     #   virtualenv
 iniconfig==2.0.0
     # via pytest
-nodeenv==1.8.0
+nodeenv==1.9.0
     # via pyright
 packaging==24.0
     # via
     #   pyproject-api
     #   pytest
     #   tox
-platformdirs==4.2.0
+platformdirs==4.2.2
     # via
     #   tox
     #   virtualenv
-pluggy==1.4.0
+pluggy==1.5.0
     # via
     #   pytest
     #   tox
 pyproject-api==1.6.1
     # via tox
-pyright==1.1.360
+pyright==1.1.365
     # via -r requirements/requirements-test.in
-pytest==8.1.1
+pytest==8.2.1
     # via -r requirements/requirements-test.in
 tomli==2.0.1
     # via -r requirements/requirements-test.in
-tox==4.14.1
+tox==4.15.0
     # via
     #   -r requirements/requirements-test.in
     #   tox-gh-actions
 tox-gh-actions==3.2.0
     # via -r requirements/requirements-test.in
-virtualenv==20.25.1
+virtualenv==20.26.2
     # via tox
-
-# The following packages are considered to be unsafe in a requirements file:
-# setuptools
