@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "python-jsonlogic"
 description = "An extensible and sane implementation of JsonLogic"
-version = "0.0.1"
+version = "0.1.0"
 readme = "README.rst"
 authors = [
     {name = "Victorien", email = "contact@vctrn.dev"}
