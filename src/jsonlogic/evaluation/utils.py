@@ -57,4 +57,6 @@ def get_value(obj: OperatorArgument, context: EvaluationContext) -> Any:
     """
     if isinstance(obj, Operator):
         return obj.evaluate(context)
+    if isinstance(obj, list):
+        return [get_value(sub_obj, context) for sub_obj in obj]
     return _cast_value(obj, context.settings.literal_casts)

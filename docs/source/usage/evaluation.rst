@@ -13,7 +13,6 @@ using the utility :func:`~jsonlogic.evaluation.evaluate` function:
     expr = JSONLogicExpression.from_json({">": [{"var": "my_int"}, 2]})
 
     root_op = expr.as_operator_tree(operator_registry)
-    assert isinstance(root_op, Operator)
 
     return_value = evaluate(
         root_op,

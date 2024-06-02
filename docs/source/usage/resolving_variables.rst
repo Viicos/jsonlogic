@@ -43,9 +43,9 @@ the expression will evaluate to :json:`1`. However, this dot-like notation can b
           "some.var": 2
       }
 
-For this reason, an alternative format is proposed, based on the JSON Pointer standard (:rfc:`6901`). The following expressions:
+For this reason, an alternative format is proposed, based on the JSON Pointer standard (:rfc:`6901`).
 
-with the following data:
+With the following data:
 
 .. code-block:: json
 
@@ -71,7 +71,7 @@ this is how the references will evaluate:
 Variables scopes
 ----------------
 
-The original `JsonLogic`_ format implicitly uses the notion scope in the implementation
+The original `JsonLogic`_ format implicitly uses the notion of a scope in the implementation
 of some operators such as `map <https://jsonlogic.com/operations.html#map-reduce-and-filter>`_:
 
 .. code-block:: json

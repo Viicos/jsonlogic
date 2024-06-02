@@ -4,8 +4,6 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Any, cast
 
-import pytest
-
 from jsonlogic._compat import Self
 from jsonlogic.core import JSONLogicExpression, Operator
 from jsonlogic.evaluation import EvaluationContext
@@ -232,8 +230,7 @@ def test_map() -> None:
     assert diagnostics == []
 
 
-@pytest.mark.xfail(reason="Arrays are currently considered as JSON Logic primitives.")
-def test_map_op_in_values():
+def test_map_op_in_values() -> None:
     op = as_op({"map": [["2000-01-01", {"var": "/my_date"}], {">": [{"var": ""}, "1970-01-01"]}]})
 
     rt, _ = typecheck(
@@ -243,6 +240,21 @@ def test_map_op_in_values():
     )
 
     assert rt == ArrayType(BooleanType())
+
+
+def test_nested_map() -> None:
+    op = as_op(
+        {
+            "map": [
+                [[1, 2], [3, {"var": "/my_number"}]],
+                {"var": ""},
+            ],
+        }
+    )
+
+    rt, _ = typecheck(op, data_schema={"type": "object", "properties": {"my_number": {"type": "integer"}}})
+
+    assert rt == ArrayType(ArrayType(IntegerType()))
 
 
 def test_map_root_reference() -> None:

@@ -22,7 +22,6 @@ can be used:
     expr = JSONLogicExpression.from_json({">": [{"var": "my_int"}, 2]})
 
     root_op = expr.as_operator_tree(operator_registry)
-    assert isinstance(root_op, Operator)
 
     root_type, diagnostics = typecheck(
         root_op,
