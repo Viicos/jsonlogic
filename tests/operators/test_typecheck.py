@@ -166,6 +166,30 @@ def test_binary_op() -> None:
     assert diag.message == 'Operator ">=" not supported for types integer and date'
 
 
+def test_multiply() -> None:
+    op_two_operands = as_op({"*": ["a", "b"]})
+    rt, diagnostics = typecheck(op_two_operands, {})
+    diag = diagnostics[0]
+
+    assert rt == AnyType()
+    assert diag.category == "operator"
+    assert diag.message == 'Operator "*" not supported for types string and string'
+
+    op_three_operands = as_op({"*": ["a", 1, 2]})
+    rt, diagnostics = typecheck(op_three_operands, {})
+    diag = diagnostics[0]
+
+    assert rt == AnyType()
+    assert diag.category == "operator"
+    assert diag.message == 'Operator "*" not supported for types string (argument 1) and integer (argument 2)'
+
+    op_ok = as_op({"*": [1, 2, 3, 4]})
+    rt, diagnostics = typecheck(op_ok, {})
+
+    assert rt == IntegerType()
+    assert diagnostics == []
+
+
 def test_plus() -> None:
     op_two_operands = as_op({"+": ["a", "b"]})
     rt, diagnostics = typecheck(op_two_operands, {})

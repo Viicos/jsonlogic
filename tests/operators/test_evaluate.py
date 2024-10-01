@@ -137,6 +137,26 @@ def test_binary_op() -> None:
     assert rv is True
 
 
+def test_multiply() -> None:
+    op_two_operands = as_op({"*": [2, 2]})
+    rv = evaluate(
+        op_two_operands,
+        data={},
+        data_schema=None,
+    )
+
+    assert rv == 4
+
+    op_three_operands = as_op({"*": [2, 2, 2]})
+    rv = evaluate(
+        op_three_operands,
+        data={},
+        data_schema=None,
+    )
+
+    assert rv == 8
+
+
 def test_plus() -> None:
     op_two_operands = as_op({"+": [1, 2]})
     rv = evaluate(

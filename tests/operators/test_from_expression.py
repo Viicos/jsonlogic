@@ -7,6 +7,7 @@ from jsonlogic.operators import (
     If,
     Map,
     Minus,
+    Multiply,
     Plus,
     Var,
 )
@@ -61,6 +62,14 @@ def test_binary_op() -> None:
 
     with pytest.raises(JSONLogicSyntaxError, match="'>' expects two arguments, got 3"):
         GreaterThan.from_expression(">", [1, 2, 3])
+
+
+def test_multiply() -> None:
+    multipy = Multiply.from_expression("*", [1, 2, 3, 4])
+    assert multipy.arguments == [1, 2, 3, 4]
+
+    with pytest.raises(JSONLogicSyntaxError, match="'*' expects at least two arguments, got 1"):
+        Plus.from_expression("*", [1])
 
 
 def test_plus() -> None:

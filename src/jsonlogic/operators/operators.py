@@ -236,6 +236,41 @@ class Modulo(BinaryOperator):
 
 
 @dataclass
+class Multiply(Operator):
+    arguments: list[OperatorArgument]
+
+    @classmethod
+    def from_expression(cls, operator: str, arguments: list[OperatorArgument]) -> Self:
+        if not len(arguments) >= 2:
+            raise JSONLogicSyntaxError(f"{operator!r} expects at least two arguments, got {len(arguments)}")
+        return cls(operator=operator, arguments=arguments)
+
+    def typecheck(self, context: TypecheckContext) -> JSONSchemaType:
+        types = (get_type(obj, context) for obj in self.arguments)
+        result_type = next(types)
+
+        for i, typ in enumerate(types, start=1):
+            try:
+                result_type = result_type.binary_op(typ, "*")
+            except UnsupportedOperation:
+                if len(self.arguments) == 2:
+                    msg = f'Operator "*" not supported for types {result_type.name} and {typ.name}'
+                else:
+                    msg = f'Operator "*" not supported for types {result_type.name} (argument {i}) and {typ.name} (argument {i + 1})'  # noqa: E501
+                context.add_diagnostic(
+                    msg,
+                    "operator",
+                    self,
+                )
+                return AnyType()
+
+        return result_type
+
+    def evaluate(self, context: EvaluationContext) -> Any:
+        return functools.reduce(lambda a, b: get_value(a, context) * get_value(b, context), self.arguments)
+
+
+@dataclass
 class Plus(Operator):
     arguments: list[OperatorArgument]
 
