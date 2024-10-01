@@ -20,7 +20,7 @@ JSONArray: TypeAlias = "list[JSON]"
 JSON: TypeAlias = "JSONPrimitive | JSONArray | JSONObject"
 
 JSONLogicPrimitive: TypeAlias = "JSONPrimitive | list[JSONLogicPrimitive]"
-"""A JSON Logic primitive is recursively defined as either a JSON primitive or a list of JSON Logic primitives.
+"""A JSON Logic primitive is recursively defined either as a JSON primitive or a list of JSON Logic primitives.
 
 Such primitives are only considered when dealing with operator arguments:
 
@@ -36,7 +36,8 @@ Such primitives are only considered when dealing with operator arguments:
 """
 
 OperatorArgument: TypeAlias = "Operator | JSONLogicPrimitive | list[OperatorArgument]"
-"""An operator argument is recursively defined a JSON Logic primitive, an operator or a list of operator arguments.
+"""An operator argument is recursively defined either as a JSON Logic primitive, an operator or a list of
+operator arguments.
 
 .. code-block:: json
 

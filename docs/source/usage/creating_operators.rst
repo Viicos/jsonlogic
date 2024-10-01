@@ -61,9 +61,9 @@ This method is responsible for
 
 - typechecking the children::
 
-    from jsonlogic.typechecking import TypecheckContext
+    from jsonlogic.typechecking import TypecheckContext, get_type
     from jsonlogic.json_schema import from_value
-    from jsonlogic.json_schema.types import BooleanType, UnsupportedOperation
+    from jsonlogic.json_schema.types import AnyType, BooleanType, UnsupportedOperation
 
     class GreaterThan(Operator):
         ...
@@ -94,6 +94,8 @@ This method is responsible for
                     "not_comparable",
                     self
                 )
+                # Usually, you will want to return "AnyType" if typechecking failed:
+                return AnyType()
 
   The :class:`~jsonlogic.typechecking.TypecheckContext` object is used to emit diagnostics
   and access the JSON Schema of the data provided when using :func:`~jsonlogic.typechecking.typecheck`.
