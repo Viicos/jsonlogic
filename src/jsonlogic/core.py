@@ -13,9 +13,6 @@ from .json_schema.types import AnyType, JSONSchemaType
 from .typing import JSON, JSONLogicPrimitive, JSONObject, OperatorArgument
 
 if TYPE_CHECKING:
-    # This is a hack to make Pylance think `TypeAlias` comes from `typing`
-    from typing import TypeAlias
-
     from .evaluation import EvaluationContext
     from .registry import OperatorRegistry
     from .typechecking import TypecheckContext
