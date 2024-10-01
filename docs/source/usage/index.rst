@@ -24,10 +24,8 @@ if necessary. The underlying expression can be accessed:
     >>> expr.expression
     {
         '>': [
-            JSONLogicExpression(expression={
-                'var': [JSONLogicExpression(expression='my_int')]  # "my_int" argument as a list
-            }),
-            JSONLogicExpression(expression=2)
+            JSONLogicExpression(expression={'var': ['my_int']}),  # "my_int" argument as a list
+            2
         ]
     }
 
