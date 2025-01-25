@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import enum
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Generic, Iterator, Literal, TypeVar
+from typing import Generic, Literal, TypeVar
 
 from ._compat import TypeAlias
 
@@ -17,7 +18,7 @@ class _UnsetTypeEnum(enum.Enum):
 UNSET = _UnsetTypeEnum.UNSET
 """A sentinel value representing an unset (or not provided) value."""
 
-UnsetType: TypeAlias = Literal[UNSET]
+UnsetType: TypeAlias = Literal[_UnsetTypeEnum.UNSET]
 """The type of the :data:`UNSET` sentinel value."""
 
 
@@ -38,7 +39,7 @@ class DataStack(Generic[DataT]):
         return self._stack[-index - 1]
 
     @contextmanager
-    def push(self, data: DataT) -> Iterator[None]:
+    def push(self, data: DataT) -> Generator[None]:
         self._stack.append(data)
 
         try:

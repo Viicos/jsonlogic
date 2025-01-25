@@ -11,7 +11,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parents[2] / "src"))
 
 project = "python-jsonlogic"
-copyright = "2024, Victorien"
+copyright = "2024-%Y, Victorien"
 author = "Victorien"
 release = "0.1.0"
 

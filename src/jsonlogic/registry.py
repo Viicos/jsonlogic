@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Callable, Type, TypeVar, overload
+from collections.abc import Callable
+from typing import TypeVar, overload
 
 from ._compat import Self, TypeAlias
 from .core import Operator
@@ -22,9 +23,9 @@ class UnkownOperator(Exception):
         self.operator_id = operator_id
 
 
-OperatorType: TypeAlias = Type[Operator]
+OperatorType: TypeAlias = type[Operator]
 
-OperatorTypeT = TypeVar("OperatorTypeT", bound=Type[Operator])
+OperatorTypeT = TypeVar("OperatorTypeT", bound=type[Operator])
 
 
 class OperatorRegistry:
