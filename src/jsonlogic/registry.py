@@ -16,7 +16,7 @@ class AlreadyRegistered(Exception):
         self.operator_id = operator_id
 
 
-class UnkownOperator(Exception):
+class UnknownOperator(Exception):
     """The provided ID does not exist in the registry."""
 
     def __init__(self, operator_id: str, /) -> None:
@@ -42,7 +42,7 @@ class OperatorRegistry:
         >>> reg.get("unknown")
         Traceback (most recent call last):
         ...
-        UnkownOperator: "unknown"
+        UnknownOperator: "unknown"
     """
 
     def __init__(self) -> None:
@@ -102,12 +102,12 @@ class OperatorRegistry:
             operator_id: The registered ID of the operator.
 
         Raises:
-            UnkownOperator: If the provided ID does not exist.
+            UnknownOperator: If the provided ID does not exist.
         """
         try:
             return self._registry[operator_id]
         except KeyError:
-            raise UnkownOperator(operator_id)  # noqa: B904
+            raise UnknownOperator(operator_id)  # noqa: B904
 
     def remove(self, operator_id: str, /) -> None:
         """Remove the operator from the registry.

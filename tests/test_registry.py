@@ -1,7 +1,7 @@
 import pytest
 
 from jsonlogic.core import Operator
-from jsonlogic.registry import AlreadyRegistered, OperatorRegistry, UnkownOperator
+from jsonlogic.registry import AlreadyRegistered, OperatorRegistry, UnknownOperator
 
 
 def test_operator_registry():
@@ -56,7 +56,7 @@ def test_force():
 def test_get_unknown():
     registry = OperatorRegistry()
 
-    with pytest.raises(UnkownOperator) as exc:
+    with pytest.raises(UnknownOperator) as exc:
         registry.get("unknown")
 
     assert exc.value.operator_id == "unknown"
