@@ -1,61 +1,54 @@
 name: tests
 
-on: [push]
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - '**'
+  pull_request: {}
 
 jobs:
-  typecheck:
-    name: Run typechecking with pyright
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python 3.13
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-      - name: Install dependencies
-        run: |
-          pip install uv
-          uv pip sync --system requirements/requirements.txt requirements/requirements-test.txt
-      - name: Run pyright
-        run: pyright
-
   test:
     name: Run tests with pytest
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
-
+        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: astral-sh/setup-uv@v8.0.0
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install dependencies
-        run: |
-          pip install uv
-          uv pip sync --system requirements/requirements.txt requirements/requirements-test.txt
+      - name: Install tox
+        run: uv tool install --managed-python --python 3.13 tox --with tox-uv --with tox-gh
+      - name: Install Python ${{ matrix.python-version }}
+        run: uv python install --managed-python ${{ matrix.python-version }}
       - name: Test with tox
-        run: tox
+        run: tox run
+        env:
+          TOX_GH_MAJOR_MINOR: ${{ matrix.python-version }}
+          UV_PYTHON_DOWNLOADS: never
 
   docs:
     name: Build and check documentation
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python 3.13
-        uses: actions/setup-python@v5
+
+      - name: Set up Python 3.14
+        uses: astral-sh/setup-uv@v8.0.0
         with:
-          python-version: '3.13'
+          python-version: '3.14'
+
       - name: Install dependencies
-        run: |
-          pip install uv
-          uv pip sync --system requirements/requirements.txt requirements/requirements-docs.txt
+        run: uv sync --group docs
+
       - name: Lint docs with sphinx-lint
         run: |
           sphinx-lint docs
+
       - name: Build docs and check the integrity of external links
         run: |
           sphinx-build --builder linkcheck --fail-on-warning "source" "build"

@@ -1,49 +1,65 @@
 [build-system]
-requires = ["setuptools>=61.0.0"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "python-jsonlogic"
-description = "An extensible and sane implementation of JsonLogic"
 version = "0.1.0"
+description = "An extensible and sane implementation of JsonLogic"
 readme = "README.rst"
 authors = [
     {name = "Victorien", email = "contact@vctrn.dev"}
 ]
+license = 'MIT'
+license-files = ['LICENSE']
+requires-python = ">=3.10"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Typing :: Typed",
-    "License :: OSI Approved :: MIT License",
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-license = {file = "LICENSE"}
-requires-python = ">=3.8"
 dependencies = [
     "typing-extensions>=4.10.0; python_version < '3.13'",
 ]
 
-[tool.setuptools]
-package-dir = {"" = "src"}
+[dependency-groups]
+dev = [
+    "pyright",
+    "ruff",
+    "pytest",
+    "tomli",
+    "tox",
+    "tox-gh",
+    "tox-uv",
+]
+docs = [
+    "furo",
+    "sphinx",
+    "sphinx-lint",
+    "sphinx-paramlinks",
+]
 
-[tool.setuptools.packages.find]
-where = ["src"]
 
-[tool.setuptools.package-data]
-"jsonlogic" = ["py.typed"]
+[tool.hatch.build.targets.wheel]
+packages = ["src/jsonlogic"]
+
+[tool.uv]
+default-groups = ['dev']
+required-version = ">=0.9.0"
 
 [tool.ruff]
-line-length = 120
 src = ["src"]
-target-version = "py39"
+target-version = "py310"
+line-length = 120
 
 [tool.ruff.lint]
 typing-modules = ["jsonlogic._compat"]
@@ -78,3 +94,22 @@ known-first-party = ["jsonlogic"]
 
 [tool.pytest.ini_options]
 pythonpath = "src"
+
+[tool.tox]
+requires = ["tox>=4.21"]
+env_list = ["py310", "py311", "py312", "py314"]
+
+[tool.tox.env_run_base]
+description = "Run test under {base_python}"
+runner = "uv-venv-lock-runner"
+dependency_groups = ["dev"]
+uv_python_preference = "only-managed"
+uv_sync_flags = ["--no-python-downloads"]
+commands = [["pytest"]]
+
+[tool.tox.gh.python]
+"3.10" = ["py310"]
+"3.11" = ["py311"]
+"3.12" = ["py312"]
+"3.13" = ["py313"]
+"3.14" = ["py314"]

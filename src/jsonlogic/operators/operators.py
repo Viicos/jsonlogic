@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import functools
 import operator
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable, ClassVar, cast
+from typing import Any, ClassVar, cast
 
 from jsonlogic._compat import Self
 from jsonlogic.core import JSONLogicSyntaxError, Operator
@@ -138,7 +139,11 @@ class If(Operator):
             raise JSONLogicSyntaxError(f"{operator!r} expects at least 3 arguments, got {len(arguments)}")
         if len(arguments) % 2 == 0:
             raise JSONLogicSyntaxError(f"{operator!r} expects an odd number of arguments, got {len(arguments)}")
-        return cls(operator=operator, if_elses=list(zip(arguments[::2], arguments[1::2])), leading_else=arguments[-1])
+        return cls(
+            operator=operator,
+            if_elses=list(zip(arguments[::2], arguments[1::2], strict=True)),
+            leading_else=arguments[-1],
+        )
 
     def typecheck(self, context: TypecheckContext) -> JSONSchemaType:
         for i, (cond, _) in enumerate(self.if_elses, start=1):

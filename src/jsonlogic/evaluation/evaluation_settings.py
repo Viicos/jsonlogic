@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import date, datetime
-from typing import Any, Callable, TypedDict
+from typing import Any, TypedDict
 
 from jsonlogic._compat import Self
 from jsonlogic.resolving import PointerReferenceParser, ReferenceParser
