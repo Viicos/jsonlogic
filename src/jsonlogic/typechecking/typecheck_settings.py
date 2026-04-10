@@ -75,7 +75,7 @@ class TypecheckSettings:
 
     Default: :python:`{"date": DateType, "date-time": DatetimeType}`.
 
-    .. _JSON Schema formats: https://json-schema.org/understanding-json-schema/reference/string#built-in-formats
+    .. _JSON Schema formats: https://json-schema.org/draft/2020-12/draft-bhutton-json-schema-validation-00#rfc.section.7.2
     """
 
     literal_casts: dict[Callable[[str], Any], type[JSONSchemaType]] = field(default_factory=dict)
@@ -180,7 +180,7 @@ class TypecheckSettingsDict(TypedDict, total=False):
 
     Default: :python:`{"date": DateType, "date-time": DatetimeType}`.
 
-    .. _JSON Schema formats: https://json-schema.org/understanding-json-schema/reference/string#built-in-formats
+    .. _JSON Schema formats: https://json-schema.org/draft/2020-12/draft-bhutton-json-schema-validation-00#rfc.section.7.2
     """
 
     literal_casts: dict[Callable[[str], Any], type[JSONSchemaType]]

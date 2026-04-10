@@ -35,11 +35,12 @@ dependencies = [
 dev = [
     "pyright",
     "ruff",
-    "pytest",
+    "pytest>=8.4.0",
     "tomli",
-    "tox",
-    "tox-gh",
-    "tox-uv",
+    "ruff>=0.11.3",
+    "tox>=4.25.0",
+    "tox-gh>=1.5.0",
+    "tox-uv>=1.25.0",
 ]
 docs = [
     "furo",

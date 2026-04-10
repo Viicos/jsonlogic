@@ -38,7 +38,7 @@ class EvaluationSettings:
 
     Default: :python:`{"date": date.fromisoformat, "date-time": datetime.fromisoformat}`.
 
-    .. _JSON Schema formats: https://json-schema.org/understanding-json-schema/reference/string#built-in-formats
+    .. _JSON Schema formats: https://json-schema.org/draft/2020-12/draft-bhutton-json-schema-validation-00#rfc.section.7.2
     """
 
     literal_casts: list[Callable[[str], Any]] = field(default_factory=list)
@@ -84,7 +84,7 @@ class EvaluationSettingsDict(TypedDict, total=False):
 
     Default: :python:`{"date": date.fromisoformat, "date-time": datetime.fromisoformat}`.
 
-    .. _JSON Schema formats: https://json-schema.org/understanding-json-schema/reference/string#built-in-formats
+    .. _JSON Schema formats: https://json-schema.org/draft/2020-12/draft-bhutton-json-schema-validation-00#rfc.section.7.2
     """
 
     literal_casts: list[Callable[[str], Any]]

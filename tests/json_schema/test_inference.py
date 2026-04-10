@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import date
-from typing import Any, Callable, NoReturn
+from typing import Any, NoReturn
 
 import pytest
 

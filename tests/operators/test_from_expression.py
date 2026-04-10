@@ -25,10 +25,13 @@ def test_var() -> None:
     var_default = Var.from_expression("var", ["some.path", 1])
     assert var_default.default_value == 1
 
-    with pytest.raises(JSONLogicSyntaxError, match="'var' expects one or two arguments, got 3"):
+    with pytest.raises(JSONLogicSyntaxError, check=lambda e: e.message == "'var' expects one or two arguments, got 3"):
         Var.from_expression("var", [1, 2, 3])
 
-    with pytest.raises(JSONLogicSyntaxError, match="Variable path must be a string on an operator, got <class 'list'>"):
+    with pytest.raises(
+        JSONLogicSyntaxError,
+        check=lambda e: e.message == "Variable path must be a string on an operator, got <class 'list'>",
+    ):
         Var.from_expression("var", [["invalid_array"]])
 
 
@@ -38,7 +41,7 @@ def test_equality_op() -> None:
     assert equal.left == 1
     assert equal.right == 2
 
-    with pytest.raises(JSONLogicSyntaxError, match="'==' expects two arguments, got 3"):
+    with pytest.raises(JSONLogicSyntaxError, check=lambda e: e.message == "'==' expects two arguments, got 3"):
         Equal.from_expression("==", [1, 2, 3])
 
 
@@ -47,10 +50,12 @@ def test_if() -> None:
     assert if_.if_elses == [(1, 2), (3, 4)]
     assert if_.leading_else == 5
 
-    with pytest.raises(JSONLogicSyntaxError, match="'if' expects at least 3 arguments, got 1"):
+    with pytest.raises(JSONLogicSyntaxError, check=lambda e: e.message == "'if' expects at least 3 arguments, got 1"):
         If.from_expression("if", [1])
 
-    with pytest.raises(JSONLogicSyntaxError, match="'if' expects an odd number of arguments, got 6"):
+    with pytest.raises(
+        JSONLogicSyntaxError, check=lambda e: e.message == "'if' expects an odd number of arguments, got 6"
+    ):
         If.from_expression("if", [1, 2, 3, 4, 5, 6])
 
 
@@ -60,7 +65,7 @@ def test_binary_op() -> None:
     assert greater_than.left == 1
     assert greater_than.right == 2
 
-    with pytest.raises(JSONLogicSyntaxError, match="'>' expects two arguments, got 3"):
+    with pytest.raises(JSONLogicSyntaxError, check=lambda e: e.message == "'>' expects two arguments, got 3"):
         GreaterThan.from_expression(">", [1, 2, 3])
 
 
@@ -68,7 +73,7 @@ def test_multiply() -> None:
     multipy = Multiply.from_expression("*", [1, 2, 3, 4])
     assert multipy.arguments == [1, 2, 3, 4]
 
-    with pytest.raises(JSONLogicSyntaxError, match="'*' expects at least two arguments, got 1"):
+    with pytest.raises(JSONLogicSyntaxError, check=lambda e: e.message == "'*' expects at least two arguments, got 1"):
         Plus.from_expression("*", [1])
 
 
@@ -76,7 +81,7 @@ def test_plus() -> None:
     plus = Plus.from_expression("+", [1, 2, 3, 4])
     assert plus.arguments == [1, 2, 3, 4]
 
-    with pytest.raises(JSONLogicSyntaxError, match=r"'\+' expects at least two arguments, got 1"):
+    with pytest.raises(JSONLogicSyntaxError, check=lambda e: e.message == "'+' expects at least two arguments, got 1"):
         Plus.from_expression("+", [1])
 
 
@@ -89,7 +94,7 @@ def test_minus() -> None:
     assert minus.left == 1
     assert minus.right == 2
 
-    with pytest.raises(JSONLogicSyntaxError, match="'-' expects one or two arguments, got 3"):
+    with pytest.raises(JSONLogicSyntaxError, check=lambda e: e.message == "'-' expects one or two arguments, got 3"):
         Minus.from_expression("-", [1, 2, 3])
 
 
@@ -98,5 +103,5 @@ def test_map() -> None:
     assert map.vars == [1, 2]
     assert map.func == 3
 
-    with pytest.raises(JSONLogicSyntaxError, match="'map' expects two arguments, got 3"):
+    with pytest.raises(JSONLogicSyntaxError, check=lambda e: e.message == "'map' expects two arguments, got 3"):
         Map.from_expression("map", [1, 2, 3])

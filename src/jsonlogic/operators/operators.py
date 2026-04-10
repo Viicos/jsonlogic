@@ -141,7 +141,7 @@ class If(Operator):
             raise JSONLogicSyntaxError(f"{operator!r} expects an odd number of arguments, got {len(arguments)}")
         return cls(
             operator=operator,
-            if_elses=list(zip(arguments[::2], arguments[1::2], strict=True)),
+            if_elses=list(zip(arguments[::2], arguments[1::2], strict=False)),
             leading_else=arguments[-1],
         )
 
