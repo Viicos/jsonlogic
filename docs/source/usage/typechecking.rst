@@ -52,7 +52,7 @@ Representing types
 
 The :mod:`jsonlogic.json_schema.types` module defines a fixed representation of the possible
 JSON Schema types. The primitive types are represented (e.g. :class:`~jsonlogic.json_schema.types.BooleanType`),
-but the module supports `formats <https://json-schema.org/understanding-json-schema/reference/string#format>`_
+but the module supports `formats <https://json-schema.org/draft/2020-12/draft-bhutton-json-schema-validation-00#rfc.section.7.2>`_
 to allow operators to work with specific other types (e.g. ``"date"`` and ``"date-time"``).
 
 Compound types

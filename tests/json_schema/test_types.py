@@ -52,7 +52,8 @@ def test_boolean_type() -> None:
         boolean_type.unary_op("-")
 
     for binary_op in BINARY_OPS:
-        pytest.raises(UnsupportedOperation, boolean_type.binary_op, AnyType(), binary_op)
+        with pytest.raises(UnsupportedOperation):
+            boolean_type.binary_op(AnyType(), binary_op)
 
 
 def test_number_type() -> None:
@@ -70,7 +71,8 @@ def test_number_type() -> None:
             assert number_type.binary_op(other, op) == NumberType()  # type: ignore
 
     for binary_op in BINARY_OPS:
-        pytest.raises(UnsupportedOperation, number_type.binary_op, AnyType(), binary_op)
+        with pytest.raises(UnsupportedOperation):
+            number_type.binary_op(AnyType(), binary_op)
 
 
 def test_integer_type() -> None:
@@ -92,7 +94,8 @@ def test_integer_type() -> None:
         assert integer_type.binary_op(IntegerType(), op) == IntegerType()  # type: ignore
 
     for binary_op in BINARY_OPS:
-        pytest.raises(UnsupportedOperation, integer_type.binary_op, AnyType(), binary_op)
+        with pytest.raises(UnsupportedOperation):
+            integer_type.binary_op(AnyType(), binary_op)
 
 
 def test_string_type() -> None:
@@ -105,7 +108,8 @@ def test_string_type() -> None:
         string_type.unary_op("-")
 
     for binary_op in BINARY_OPS:
-        pytest.raises(UnsupportedOperation, string_type.binary_op, AnyType(), binary_op)
+        with pytest.raises(UnsupportedOperation):
+            string_type.binary_op(AnyType(), binary_op)
 
 
 def test_datetime_type() -> None:
@@ -114,7 +118,8 @@ def test_datetime_type() -> None:
     assert datetime_type.name == "datetime"
 
     for unary_op in UNARY_OPS:
-        pytest.raises(UnsupportedOperation, datetime_type.unary_op, unary_op)
+        with pytest.raises(UnsupportedOperation):
+            datetime_type.unary_op(unary_op)
 
     for op in (">", ">=", "<", "<="):
         assert datetime_type.binary_op(DatetimeType(), op) == BooleanType()
@@ -125,7 +130,8 @@ def test_datetime_type() -> None:
         assert datetime_type.binary_op(DurationType(), op) == DatetimeType()
 
     for binary_op in BINARY_OPS:
-        pytest.raises(UnsupportedOperation, datetime_type.binary_op, AnyType(), binary_op)
+        with pytest.raises(UnsupportedOperation):
+            datetime_type.binary_op(AnyType(), binary_op)
 
 
 def test_date_type() -> None:
@@ -134,7 +140,8 @@ def test_date_type() -> None:
     assert date_type.name == "date"
 
     for unary_op in UNARY_OPS:
-        pytest.raises(UnsupportedOperation, date_type.unary_op, unary_op)
+        with pytest.raises(UnsupportedOperation):
+            date_type.unary_op(unary_op)
 
     for op in (">", ">=", "<", "<="):
         assert date_type.binary_op(DateType(), op) == BooleanType()
@@ -145,7 +152,8 @@ def test_date_type() -> None:
         assert date_type.binary_op(DurationType(), op) == DateType()
 
     for binary_op in BINARY_OPS:
-        pytest.raises(UnsupportedOperation, date_type.binary_op, AnyType(), binary_op)
+        with pytest.raises(UnsupportedOperation):
+            date_type.binary_op(AnyType(), binary_op)
 
 
 def test_duration_type():
@@ -167,7 +175,8 @@ def test_duration_type():
     assert duration_type.binary_op(DateType(), "+") == DateType()
 
     for binary_op in BINARY_OPS:
-        pytest.raises(UnsupportedOperation, duration_type.binary_op, AnyType(), binary_op)
+        with pytest.raises(UnsupportedOperation):
+            duration_type.binary_op(AnyType(), binary_op)
 
 
 def test_null_type():
@@ -180,7 +189,8 @@ def test_null_type():
         null_type.unary_op("-")
 
     for binary_op in BINARY_OPS:
-        pytest.raises(UnsupportedOperation, null_type.binary_op, AnyType(), binary_op)
+        with pytest.raises(UnsupportedOperation):
+            null_type.binary_op(AnyType(), binary_op)
 
 
 def test_array_type():
@@ -193,7 +203,8 @@ def test_array_type():
         array_type.unary_op("-")
 
     for binary_op in BINARY_OPS:
-        pytest.raises(UnsupportedOperation, array_type.binary_op, AnyType(), binary_op)
+        with pytest.raises(UnsupportedOperation):
+            array_type.binary_op(AnyType(), binary_op)
 
 
 def test_tuple_type():
@@ -206,7 +217,8 @@ def test_tuple_type():
         tuple_type.unary_op("-")
 
     for binary_op in BINARY_OPS:
-        pytest.raises(UnsupportedOperation, tuple_type.binary_op, AnyType(), binary_op)
+        with pytest.raises(UnsupportedOperation):
+            tuple_type.binary_op(AnyType(), binary_op)
 
 
 def test_union_type_constructor():

@@ -1,6 +1,12 @@
 name: lint
 
-on: [push]
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - '**'
+  pull_request: {}
 
 jobs:
   ruff-format:
@@ -8,29 +14,48 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python 3.13
-        uses: actions/setup-python@v5
+
+      - name: Set up Python 3.14
+        uses: astral-sh/setup-uv@v8.0.0
         with:
-            python-version: '3.13'
+          python-version: '3.14'
+
       - name: Install dependencies
-        run: |
-          pip install uv
-          uv pip sync --system requirements/requirements.txt requirements/requirements-dev.txt
+        run: uv sync --group dev
+
       - name: Run Ruff formatter
-        run: ruff format --diff
+        run: uv run ruff format --diff
 
   ruff-check:
     name: Check code linting with Ruff
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python 3.13
-        uses: actions/setup-python@v5
+
+      - name: Set up Python 3.14
+        uses: astral-sh/setup-uv@v8.0.0
         with:
-            python-version: '3.13'
+          python-version: '3.14'
+
       - name: Install dependencies
-        run: |
-          pip install uv
-          uv pip sync --system requirements/requirements.txt requirements/requirements-dev.txt
+        run: uv sync --group dev
+
       - name: Run Ruff formatter
-        run: ruff check --output-format=github
+        run: uv run ruff check --output-format=github
+
+  typecheck:
+    name: Run typechecking with pyright
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.14
+        uses: astral-sh/setup-uv@v8.0.0
+        with:
+          python-version: '3.14'
+
+      - name: Install dependencies
+        run: uv sync --group dev
+
+      - name: Run pyright
+        run: uv run pyright

@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable, Generic, Literal, NoReturn, TypeVar, overload
+from typing import Generic, Literal, NoReturn, TypeVar, overload
 
 from jsonlogic._compat import Self, TypeAlias, TypeVarTuple, Unpack
 
@@ -92,7 +93,7 @@ class JSONSchemaType(ABC):
         return UnionType(self, value)
 
 
-class UnionType(JSONSchemaType):
+class UnionType(JSONSchemaType):  # noqa: PLW1641
     types: set[JSONSchemaPrimitiveType]
 
     @overload

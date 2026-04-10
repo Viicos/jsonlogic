@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from jsonlogic.core import Operator
 from jsonlogic.typing import JSON, JSONLogicPrimitive, OperatorArgument

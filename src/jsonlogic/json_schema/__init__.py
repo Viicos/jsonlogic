@@ -1,8 +1,10 @@
 from __future__ import annotations
 
-from typing import Any, Callable, cast
+from collections.abc import Callable
+from types import NoneType
+from typing import Any, cast
 
-from jsonlogic._compat import NoneType, TypeIs
+from jsonlogic._compat import TypeIs
 from jsonlogic.typing import JSON, JSONLogicPrimitive
 
 from .types import (
@@ -179,6 +181,9 @@ def cast_from_schema(value: JSON, json_schema: dict[str, Any], variable_casts: d
         prefix_items = cast("list[dict[str, Any]] | None", json_schema.get("prefixItems"))
         if prefix_items is not None:  # TODO check for min/maxItems?
             # TODO return a tuple instead? Needs decision
-            return [cast_from_schema(val, item_type, variable_casts) for val, item_type in zip(value, prefix_items)]
+            return [
+                cast_from_schema(val, item_type, variable_casts)
+                for val, item_type in zip(value, prefix_items, strict=True)
+            ]
 
     return value
