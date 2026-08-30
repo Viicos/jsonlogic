@@ -82,5 +82,3 @@ class for more details.
 
 .. [#f1] Of course you can skip this step and evaluate the expression directly.
    Do note that no runtime exception will be caught during evaluation of operators.
-
-
