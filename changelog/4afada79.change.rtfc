@@ -1,0 +1,10 @@
++++
+date = 2026-04-10
+nonce = "4afada79"
+section = "change"
+
+[metadata]
+gh_pr = 37
+gh_author = "Viicos"
++++
+Add support for Python 3.13 (:pr:`35`) and 3.14, drop support for Python 3.8 and 3.9

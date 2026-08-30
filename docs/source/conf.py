@@ -23,8 +23,15 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
+    "sphinx_issues",
     "sphinx_paramlinks",
+    "rtfc.sphinx",
 ]
+
+issues_github_path = "Viicos/jsonlogic"
+issues_user_uri = "https://github.com/{user}"
+
+rtfc_config_directory = "../.."
 
 rst_prolog = """
 .. role:: python(code)

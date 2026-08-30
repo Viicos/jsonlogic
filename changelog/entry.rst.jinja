@@ -1,0 +1,8 @@
+{% set refs = [] %}
+{% if metadata.gh_issue %}{% set _ = refs.append("Issue :issue:`%s`" % metadata.gh_issue) %}{% endif %}
+{% if metadata.gh_pr %}{% set _ = refs.append("PR :pr:`%s`" % metadata.gh_pr) %}{% endif %}
+{% set refs = refs | join(", ") %}
+{% if metadata.gh_author %}{% set refs = (refs ~ " by :user:`%s`" % metadata.gh_author) | trim %}{% endif %}
+{# References are attached to the first paragraph, so that multi-paragraph entries (e.g. with a code example) stay valid: #}
+{% set first, _, rest = content.partition("\n\n") %}
+{{ first }}{% if refs %} ({{ refs }}).{% endif %}{% if rest %}{{ "\n\n" ~ rest }}{% endif %}
