@@ -50,6 +50,10 @@ docs = [
     "sphinx-lint",
     "sphinx-paramlinks",
 ]
+build = [
+    "build",
+    "twine",
+]
 
 
 [tool.hatch.build.targets.wheel]

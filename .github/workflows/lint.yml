@@ -8,17 +8,33 @@ on:
       - '**'
   pull_request: {}
 
+permissions:
+  contents: read
+
 jobs:
+  prek:
+    name: Run prek pre-commit hooks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: j178/prek-action@4e14d07f9231acabce116ccfca13b13dd9755ece # v3.0.0
+
   ruff-format:
     name: Check code formatting with Ruff
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Set up Python 3.14
-        uses: astral-sh/setup-uv@v8.0.0
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           python-version: '3.14'
+          enable-cache: true # zizmor: ignore[cache-poisoning] (Job does not produce release artifacts and does not have sensitive permissions)
 
       - name: Install dependencies
         run: uv sync --group dev
@@ -30,12 +46,15 @@ jobs:
     name: Check code linting with Ruff
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Set up Python 3.14
-        uses: astral-sh/setup-uv@v8.0.0
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           python-version: '3.14'
+          enable-cache: true # zizmor: ignore[cache-poisoning] (Job does not produce release artifacts and does not have sensitive permissions)
 
       - name: Install dependencies
         run: uv sync --group dev
@@ -47,12 +66,15 @@ jobs:
     name: Run typechecking with pyright
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Set up Python 3.14
-        uses: astral-sh/setup-uv@v8.0.0
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           python-version: '3.14'
+          enable-cache: true # zizmor: ignore[cache-poisoning] (Job does not produce release artifacts and does not have sensitive permissions)
 
       - name: Install dependencies
         run: uv sync --group dev
