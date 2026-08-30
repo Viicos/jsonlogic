@@ -16,3 +16,4 @@ Indices and tables
 
    usage/index
    api/index
+   changelog

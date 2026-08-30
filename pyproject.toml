@@ -41,10 +41,12 @@ dev = [
     "tox>=4.25.0",
     "tox-gh>=1.5.0",
     "tox-uv>=1.25.0",
+    "rtfc; python_version > '3.11'",
 ]
 docs = [
     "furo",
     "sphinx",
+    "sphinx-issues",
     "sphinx-lint",
     "sphinx-paramlinks",
 ]
@@ -98,6 +100,21 @@ known-first-party = ["jsonlogic"]
 
 [tool.pytest.ini_options]
 pythonpath = "src"
+
+[tool.rtfc]
+changelog = "docs/source/changelog.rst"
+
+[tool.rtfc.render]
+entry_template_file = "changelog/entry.rst.jinja"
+
+[tool.rtfc.export.github-markdown.engine]
+name = "sphinx"
+sphinx_directory = "docs/source"
+
+[tool.rtfc.metadata]
+gh_issue = {type = "integer"}
+gh_pr = {type = "integer"}
+gh_author = {type = "string"}
 
 [tool.tox]
 requires = ["tox>=4.21"]
